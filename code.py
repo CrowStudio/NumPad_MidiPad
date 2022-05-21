@@ -77,10 +77,10 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
                    macropad.Keycode.PERIOD,
                    macropad.Keycode.KEYPAD_EQUALS]
 
-button_mode = 0  # mode 0 for NumPad / mode 1 for BlackBox
+button_mode = 0  # button_mode 0 for NumPad / button_mode 1 for BlackBox
 
 encoder_pos = 0
-mode = 0
+encoder_mode = 0
 
 characters_entered = ""
 
@@ -208,8 +208,8 @@ while True:
             text_lines[1].text = f"{characters_entered}"
             print(f"{encoder_map[encoder_pos]}")
         if button_mode == 1:
-            mode = (mode+1) % 3
-            text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
+            encoder_mode = (encoder_mode+1) % 3
+            text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
         macropad.red_led = macropad.encoder_switch
 
     if macropad.encoder_switch_debounced.released:
@@ -225,18 +225,18 @@ while True:
             text_lines[0].text = f"Rule of Arithmetic: {encoder_map[encoder_pos]}"
 
         elif button_mode == 1:
-            if mode == 0:
-                cc_values[mode] = min(max(cc_values[mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM0, int(cc_values[mode]*4.1)))
-                text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
-            elif mode == 1:
-                cc_values[mode] = min(max(cc_values[mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM1, int(cc_values[mode]*4.1)))
-                text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
-            elif mode == 2:
-                cc_values[mode] = min(max(cc_values[mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM2, int(cc_values[mode]*4.1)))
-                text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
+            if encoder_mode == 0:
+                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+                macropad.midi.send(macropad.ControlChange(CC_NUM0, int(cc_values[encoder_mode]*4.1)))
+                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
+            elif encoder_mode == 1:
+                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+                macropad.midi.send(macropad.ControlChange(CC_NUM1, int(cc_values[encoder_mode]*4.1)))
+                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
+            elif encoder_mode == 2:
+                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+                macropad.midi.send(macropad.ControlChange(CC_NUM2, int(cc_values[encoder_mode]*4.1)))
+                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
         last_knob_pos = macropad.encoder
 
     text_lines.show()
