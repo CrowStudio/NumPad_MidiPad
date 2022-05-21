@@ -43,43 +43,43 @@ encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
 key_map = []
 
-def key_maps(mapping):
-    key_mapping = [['7', '8', '9',
+def key_maps(map):
+    key_map = [['7', '8', '9',
                     '4', '5', '6',
                     '1', '2', '3',
                     ',', '0', 'Enter'],
                    [40, 41, 42, 43,
                     44, 45, 46, 47,
                     48, 49, 50, 51]]
-    return key_mapping[mapping]
+    return key_map[map]
 
-key_press = [macropad.Keycode.KEYPAD_SEVEN,
-             macropad.Keycode.KEYPAD_EIGHT,
-             macropad.Keycode.KEYPAD_NINE,
-             macropad.Keycode.KEYPAD_FOUR,
-             macropad.Keycode.KEYPAD_FIVE,
-             macropad.Keycode.KEYPAD_SIX,
-             macropad.Keycode.KEYPAD_ONE,
-             macropad.Keycode.KEYPAD_TWO,
-             macropad.Keycode.KEYPAD_THREE,
-             macropad.Keycode.COMMA,
-             macropad.Keycode.KEYPAD_ZERO,
-             macropad.Keycode.KEYPAD_ENTER]
+keycode = [macropad.Keycode.KEYPAD_SEVEN,
+           macropad.Keycode.KEYPAD_EIGHT,
+           macropad.Keycode.KEYPAD_NINE,
+           macropad.Keycode.KEYPAD_FOUR,
+           macropad.Keycode.KEYPAD_FIVE,
+           macropad.Keycode.KEYPAD_SIX,
+           macropad.Keycode.KEYPAD_ONE,
+           macropad.Keycode.KEYPAD_TWO,
+           macropad.Keycode.KEYPAD_THREE,
+           macropad.Keycode.COMMA,
+           macropad.Keycode.KEYPAD_ZERO,
+           macropad.Keycode.KEYPAD_ENTER]
 
-encoder_press = [macropad.Keycode.KEYPAD_PLUS,
-                 macropad.Keycode.KEYPAD_MINUS,
-                 macropad.Keycode.KEYPAD_ASTERISK,
-                 macropad.Keycode.KEYPAD_FORWARD_SLASH,
-                 macropad.Keycode.EIGHT,
-                 macropad.Keycode.NINE,
-                 macropad.Keycode.FIVE,
-                 macropad.Keycode.BACKSPACE,
-                 macropad.Keycode.PERIOD,
-                 macropad.Keycode.KEYPAD_EQUALS]
+encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
+                   macropad.Keycode.KEYPAD_MINUS,
+                   macropad.Keycode.KEYPAD_ASTERISK,
+                   macropad.Keycode.KEYPAD_FORWARD_SLASH,
+                   macropad.Keycode.EIGHT,
+                   macropad.Keycode.NINE,
+                   macropad.Keycode.FIVE,
+                   macropad.Keycode.BACKSPACE,
+                   macropad.Keycode.PERIOD,
+                   macropad.Keycode.KEYPAD_EQUALS]
 
 button_mode = 0  # mode 0 for NumPad / mode 1 for BlackBox
 
-arith_pos = 0
+encoder_pos = 0
 mode = 0
 
 characters_entered = ""
@@ -99,14 +99,14 @@ def set_button_mode(button_layout):
 
 
 def send_keypad_click(key):
-    return macropad.keyboard.send(key_press[key])
+    return macropad.keyboard.send(keycode[key])
 
 
-def send_encoder_click(arith_pos):
-    if arith_pos in  [4, 5, 6]:
-        return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_press[arith_pos]), macropad.keyboard.release_all()
+def send_encoder_click(encoder_pos):
+    if encoder_pos in  [4, 5, 6]:
+        return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_keycode[encoder_pos]), macropad.keyboard.release_all()
     else:
-        return macropad.keyboard.send(encoder_press[arith_pos])
+        return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
 
 def config_checkt(key_event):
@@ -160,7 +160,7 @@ while True:
             config_checkt(key_event)
             if button_mode == 0:
                 text_lines = macropad.display_text("NumPad")
-                text_lines[0].text = f"Rule of Arithmetic: {encoder_map[arith_pos]}"
+                text_lines[0].text = f"Rule of Arithmetic: {encoder_map[encoder_pos]}"
                 text_lines.show()
             if button_mode == 1:
                 text_lines = macropad.display_text("BlackBox")
@@ -172,7 +172,6 @@ while True:
                 if key_event.pressed:
                     key = key_event.key_number
                     macropad.pixels[key] = COLOR_B
-                    
                     if key_map[key] != "Enter":
                         send_keypad_click(key)
                         characters_entered = f"{characters_entered}{key_map[key]}"
@@ -181,7 +180,6 @@ while True:
                         send_keypad_click(key)
                         characters_entered = ""
                     print(f"{key_map[key]}")
-
                 if key_event.released:
                     key = key_event.key_number
                     reset_pixel_to_color_a(key)
@@ -205,10 +203,10 @@ while True:
 
     if macropad.encoder_switch_debounced.pressed:
         if button_mode == 0:
-            send_encoder_click(arith_pos)
-            characters_entered = f"{characters_entered}{encoder_map[arith_pos]}"
+            send_encoder_click(encoder_pos)
+            characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
             text_lines[1].text = f"{characters_entered}"
-            print(f"{encoder_map[arith_pos]}")
+            print(f"{encoder_map[encoder_pos]}")
         if button_mode == 1:
             mode = (mode+1) % 3
             text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
@@ -221,10 +219,10 @@ while True:
         knob_pos = macropad.encoder  # read encoder
         knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
         last_knob_pos = knob_pos  # save new reading
-        arith_pos = last_knob_pos % 10
+        encoder_pos = last_knob_pos % 10
 
         if button_mode == 0:
-            text_lines[0].text = f"Rule of Arithmetic: {encoder_map[arith_pos]}"
+            text_lines[0].text = f"Rule of Arithmetic: {encoder_map[encoder_pos]}"
 
         elif button_mode == 1:
             if mode == 0:
@@ -240,6 +238,6 @@ while True:
                 macropad.midi.send(macropad.ControlChange(CC_NUM2, int(cc_values[mode]*4.1)))
                 text_lines[0].text = f"{mode_text[mode]} {int(cc_values[mode]*4.1)}"
         last_knob_pos = macropad.encoder
-        
+
     text_lines.show()
     macropad.display.refresh()
