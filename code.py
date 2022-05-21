@@ -204,7 +204,10 @@ while True:
     if macropad.encoder_switch_debounced.pressed:
         if button_mode == 0:
             send_encoder_click(encoder_pos)
-            characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
+            if encoder_map[encoder_pos] == "<-":
+            	characters_entered = characters_entered[:-1]
+            else:
+                characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
             text_lines[1].text = f"{characters_entered}"
             print(f"{encoder_map[encoder_pos]}")
         if button_mode == 1:
