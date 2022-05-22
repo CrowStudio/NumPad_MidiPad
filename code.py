@@ -189,7 +189,7 @@ while True:
             if button_mode == 1:
                 if key_event.pressed:
                     key = key_event.key_number
-                    macropad.midi.send(macropad.NoteOn(key_map[key], 120))  # send midi noteon
+                    macropad.midi.send(macropad.NoteOn(key_map[key], 120))
                     macropad.pixels[key] = PRESSED_COLOR
                     text_lines[1].text = f"SampleOn:{key_map[key]}"
                 if key_event.released:
@@ -202,6 +202,9 @@ while True:
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
     if macropad.encoder_switch_debounced.pressed:
+        macropad.red_led = macropad.encoder_switch
+
+    if macropad.encoder_switch_debounced.released:
         if button_mode == 0:
             send_encoder_click(encoder_pos)
             if encoder_map[encoder_pos] == "<-":
@@ -212,9 +215,6 @@ while True:
         if button_mode == 1:
             encoder_mode = (encoder_mode+1) % 3
             text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-        macropad.red_led = macropad.encoder_switch
-
-    if macropad.encoder_switch_debounced.released:
         macropad.red_led = macropad.encoder_switch
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
@@ -241,5 +241,4 @@ while True:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
         last_knob_pos = macropad.encoder
 
-    text_lines.show()
     macropad.display.refresh()
