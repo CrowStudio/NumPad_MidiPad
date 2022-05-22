@@ -182,7 +182,6 @@ while True:
                     if key_map[key] == "Enter":
                         send_keypad_click(key)
                         characters_entered = ""
-                    print(f"{key_map[key]}")
                 if key_event.released:
                     key = key_event.key_number
                     reset_pixel_to_color_a(key)
@@ -193,14 +192,12 @@ while True:
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))  # send midi noteon
                     macropad.pixels[key] = PRESSED_COLOR
                     text_lines[1].text = f"SampleOn:{key_map[key]}"
-                    print(f"SampleOn:{key_map[key]}")
                 if key_event.released:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOff(key_map[key], 0))
                     reset_pixel_to_color_a(key)
                     text_lines[1].text = ""
                     #text_lines[1].text = "SampleOff:{}".format(key_map[key])
-                    print(f"SampleOff:{key_map[key]}")
 
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
@@ -212,7 +209,6 @@ while True:
             else:
                 characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
             text_lines[1].text = f"{characters_entered}"
-            print(f"{encoder_map[encoder_pos]}")
         if button_mode == 1:
             encoder_mode = (encoder_mode+1) % 3
             text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
