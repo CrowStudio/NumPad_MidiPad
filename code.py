@@ -19,9 +19,6 @@ CC_NUM0 = 7  # Volume CC number
 CC_NUM1 = 10 # Pan CC number
 CC_NUM2 = 1  # Modulation Wheel CC number
 
-mode_text = [f"CC #{CC_NUM0}", f"CC #{CC_NUM1}", f"CC #{CC_NUM2}"]
-cc_values = [0, 0, 0]  # Initial CCc values
-
 # create the macropad object, rotate orientation
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
@@ -76,11 +73,6 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
 
 button_mode = 0  # button_mode 0 for NumPad / button_mode 1 for BlackBox
 
-encoder_pos = 0
-encoder_mode = 0
-
-characters_entered = ""
-
 def config_checkt(key_event):
     global config_mode
     global BKG_COLOR
@@ -119,7 +111,7 @@ def set_button_mode(button_layout):
 def key_maps(map):
     return key_map[map]
 
-    
+
 def set_pixel_colors():
     for key in range(12):
         if key == 9 and button_mode == 0:
@@ -161,6 +153,12 @@ def send_encoder_click(encoder_pos):
 
 
 last_knob_pos = macropad.encoder  # store knob position state
+encoder_pos = 0
+encoder_mode = 0
+mode_text = [f"CC #{CC_NUM0}", f"CC #{CC_NUM1}", f"CC #{CC_NUM2}"]
+cc_values = [0, 0, 0]  # initial CC values
+
+characters_entered = ""
 
 while True:
     if macropad.keys.events:  # check for key press or release
