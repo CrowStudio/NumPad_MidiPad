@@ -41,17 +41,14 @@ text_lines.show()
 # --- Character setup --- #
 encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
-key_map = []
-
-def key_maps(map):
-    key_map = [['7', '8', '9',
-                    '4', '5', '6',
-                    '1', '2', '3',
-                    ',', '0', 'Enter'],
-                   [40, 41, 42, 43,
-                    44, 45, 46, 47,
-                    48, 49, 50, 51]]
-    return key_map[map]
+key_map = [['7', '8', '9',
+            '4', '5', '6',
+            '1', '2', '3',
+            ',', '0', 'Enter'],
+           [48, 49, 50,
+            44, 45, 46,
+            40, 41, 42,
+            36, 37, 38]]
 
 keycode = [macropad.Keycode.KEYPAD_SEVEN,
            macropad.Keycode.KEYPAD_EIGHT,
@@ -119,6 +116,10 @@ def set_button_mode(button_layout):
         key_map = key_maps(1)
 
 
+def key_maps(map):
+    return key_map[map]
+
+    
 def set_pixel_colors():
     for key in range(12):
         if key == 9 and button_mode == 0:
