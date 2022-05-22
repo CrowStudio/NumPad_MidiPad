@@ -5,11 +5,12 @@
 from adafruit_macropad import MacroPad
 from rainbowio import colorwheel
 
-# --- Pixel Colours --- #
+# --- Pixel Colors --- #
 WHITE = (255, 255, 255)
 YELLOW = (230, 100, 0)
 CYAN = (0, 255, 255)
-MAGENTA = (180, 0, 255)
+MAGENTA = (255, 0, 255)
+MINT = (0, 255, 50)
 
 COLOR_A = MAGENTA
 COLOR_B = CYAN
