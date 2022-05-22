@@ -12,8 +12,8 @@ CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 MINT = (0, 255, 50)
 
-COLOR_A = MAGENTA
-COLOR_B = CYAN
+BKG_COLOR = MAGENTA
+PRESSED_COLOR = CYAN
 
 # --- MIDI CC variables --- #
 CC_NUM0 = 7  # Volume CC number
@@ -112,22 +112,22 @@ def send_encoder_click(encoder_pos):
 
 def config_checkt(key_event):
     global config_mode
-    global COLOR_A
-    global COLOR_B
+    global BKG_COLOR
+    global PRESSED_COLOR
 
     if key_event.pressed:
         if key_event.key_number == 0:
             set_button_mode(0)
             config_mode = 0
-            COLOR_A = YELLOW
-            COLOR_B = WHITE
+            BKG_COLOR = YELLOW
+            PRESSED_COLOR = WHITE
             macropad.pixels.brightness = 0.05
             set_pixel_colors()
         if key_event.key_number == 2:
             set_button_mode(1)
             config_mode = 0
-            COLOR_A = MAGENTA
-            COLOR_B = CYAN
+            BKG_COLOR = MAGENTA
+            PRESSED_COLOR = CYAN
             macropad.pixels.brightness = 0.05
             set_pixel_colors()
 
@@ -139,7 +139,7 @@ def set_pixel_colors():
         elif key == 11 and button_mode == 0:
             macropad.pixels[key] = MAGENTA
         else:
-            macropad.pixels[key] = COLOR_A
+            macropad.pixels[key] = BKG_COLOR
 
 
 def reset_pixel_to_color_a(key):
@@ -148,7 +148,7 @@ def reset_pixel_to_color_a(key):
     elif key == 11 and button_mode == 0:
         macropad.pixels[key] = MAGENTA
     else:
-        macropad.pixels[key] = COLOR_A
+        macropad.pixels[key] = BKG_COLOR
 
 
 last_knob_pos = macropad.encoder  # store knob position state
@@ -172,7 +172,7 @@ while True:
             if button_mode == 0:
                 if key_event.pressed:
                     key = key_event.key_number
-                    macropad.pixels[key] = COLOR_B
+                    macropad.pixels[key] = PRESSED_COLOR
                     if key_map[key] != "Enter":
                         send_keypad_click(key)
                         characters_entered = f"{characters_entered}{key_map[key]}"
@@ -189,7 +189,7 @@ while True:
                 if key_event.pressed:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))  # send midi noteon
-                    macropad.pixels[key] = COLOR_B
+                    macropad.pixels[key] = PRESSED_COLOR
                     text_lines[1].text = f"SampleOn:{key_map[key]}"
                     print(f"SampleOn:{key_map[key]}")
                 if key_event.released:
