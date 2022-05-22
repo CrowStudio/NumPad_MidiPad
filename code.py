@@ -150,6 +150,16 @@ def reset_pixel_to_color_a(key):
         macropad.pixels[key] = BKG_COLOR
 
 
+def set_button_mode_text():
+    if button_mode == 0:
+        text_lines = macropad.display_text("NumPad")
+        text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
+    elif button_mode == 1:
+        text_lines = macropad.display_text("BlackBox MIDI")
+        text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+    return text_lines
+
+
 last_knob_pos = macropad.encoder  # store knob position state
 
 while True:
@@ -158,14 +168,7 @@ while True:
         key_event = macropad.keys.events.get()
         if config_mode == 1:
             config_checkt(key_event)
-            if button_mode == 0:
-                text_lines = macropad.display_text("NumPad")
-                text_lines[0].text = f"Rule of Arithmetic: {encoder_map[encoder_pos]}"
-                text_lines.show()
-            if button_mode == 1:
-                text_lines = macropad.display_text("BlackBox")
-                text_lines[0].text = "MIDI"
-                text_lines.show()
+            text_lines = set_button_mode_text()
 
         elif key_event:
             if button_mode == 0:
