@@ -153,7 +153,7 @@ def reset_pixel_to_color_a(key):
 last_knob_pos = macropad.encoder  # store knob position state
 
 while True:
-    while macropad.keys.events:  # check for key press or release
+    if macropad.keys.events:  # check for key press or release
         text_lines.show()
         key_event = macropad.keys.events.get()
         if config_mode == 1:
