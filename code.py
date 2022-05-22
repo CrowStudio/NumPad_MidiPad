@@ -84,31 +84,6 @@ encoder_mode = 0
 
 characters_entered = ""
 
-
-def set_button_mode(button_layout):
-    global button_mode
-    global key_map
-    global macropad
-
-    if button_layout == 0:
-        button_mode = 0
-        key_map = key_maps(0)
-    elif button_layout == 1:
-        button_mode = 1
-        key_map = key_maps(1)
-
-
-def send_keypad_click(key):
-    return macropad.keyboard.send(keycode[key])
-
-
-def send_encoder_click(encoder_pos):
-    if encoder_pos in  [4, 5, 6]:
-        return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_keycode[encoder_pos]), macropad.keyboard.release_all()
-    else:
-        return macropad.keyboard.send(encoder_keycode[encoder_pos])
-
-
 def config_checkt(key_event):
     global config_mode
     global BKG_COLOR
@@ -129,6 +104,19 @@ def config_checkt(key_event):
             PRESSED_COLOR = CYAN
             macropad.pixels.brightness = 0.05
             set_pixel_colors()
+
+
+def set_button_mode(button_layout):
+    global button_mode
+    global key_map
+    global macropad
+
+    if button_layout == 0:
+        button_mode = 0
+        key_map = key_maps(0)
+    elif button_layout == 1:
+        button_mode = 1
+        key_map = key_maps(1)
 
 
 def set_pixel_colors():
@@ -158,6 +146,17 @@ def set_button_mode_text():
         text_lines = macropad.display_text("BlackBox MIDI")
         text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
     return text_lines
+
+
+def send_keypad_click(key):
+    return macropad.keyboard.send(keycode[key])
+
+
+def send_encoder_click(encoder_pos):
+    if encoder_pos in [4, 5, 6]:
+        return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_keycode[encoder_pos]), macropad.keyboard.release_all()
+    else:
+        return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
 
 last_knob_pos = macropad.encoder  # store knob position state
