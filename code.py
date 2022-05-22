@@ -15,7 +15,6 @@ MINT = (0, 255, 50)
 BKG_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
-# --- MIDI CC variables --- #
 CC_NUM0 = 7  # Volume CC number
 CC_NUM1 = 10 # Pan CC number
 CC_NUM2 = 1  # Modulation Wheel CC number
