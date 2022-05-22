@@ -16,7 +16,7 @@ BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
 CC_NUM0 = 7  # Volume
-CC_NUM1 = 10  # Pan
+CC_NUM1 = 10 # Pan
 CC_NUM2 = 1  # Modulation Wheel
 
 # create the macropad object, rotate orientation, set state for startup config
@@ -52,7 +52,7 @@ row_map = [[48, 49, 50,
            44, 45, 46,
            40, 41, 42,
            36, 37, 38],
-           [48, 49, 51,
+          [48, 49, 51,
            44, 45, 47,
            40, 41, 43,
            36, 37, 39]]
@@ -83,7 +83,7 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
 
 button_mode = 2  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
 
-def config_checkt(key_event):
+def configure_keypad(key_event):
     global config_mode
     global BKGND_COLOR
     global PRESSED_COLOR
@@ -146,7 +146,7 @@ def set_button_mode_text():
         text_lines = macropad.display_text("BlackBox MIDI")
         text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
     return text_lines
-
+    
 
 def reset_pixel_to_bkgnd_color(key):
     set_background_colors(key)
@@ -162,7 +162,6 @@ def send_encoder_click(encoder_pos):
     else:
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
-
 def toggle_row():
     global key_map
     global row_4
@@ -175,9 +174,10 @@ def toggle_row():
         set_pixel_color_mode()
         key_map = row_map[0]
 
+
 last_knob_pos = macropad.encoder  # store knob position state
+encoder_mode = 3
 encoder_pos = 0
-encoder_mode = 0
 row_pos = 0
 mode_text = [f"CC # {CC_NUM0}:", f"CC #{CC_NUM1}:",
              f"CC # {CC_NUM2}:", "Active row:"]
@@ -192,7 +192,7 @@ while True:
         text_lines.show()
         key_event = macropad.keys.events.get()
         if config_mode == 1:
-            config_checkt(key_event)
+            configure_keypad(key_event)
             text_lines = set_button_mode_text()
 
         elif key_event:
@@ -216,19 +216,19 @@ while True:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
                     macropad.pixels[key] = PRESSED_COLOR
-                    text_lines[1].text = f"SampleOn:{key_map[key]}"
+                    text_lines[2].text = f"SampleOn:{key_map[key]}"
                 if key_event.released:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOff(key_map[key], 0))
                     reset_pixel_to_bkgnd_color(key)
-                    text_lines[1].text = ""
+                    text_lines[2].text = ""
                     #text_lines[1].text = "SampleOff:{}".format(key_map[key])
 
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
     if macropad.encoder_switch_debounced.pressed:
         macropad.red_led = macropad.encoder_switch
-
+        
     if macropad.encoder_switch_debounced.released:
         if button_mode == 0:
             send_encoder_click(encoder_pos)
@@ -270,10 +270,11 @@ while True:
                 cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
                 macropad.midi.send(macropad.ControlChange(CC_NUM2, int(cc_values[encoder_mode]*4.1)))
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-
+            
             elif encoder_mode == 3:
                 toggle_row()
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+                
         last_knob_pos = macropad.encoder
 
     macropad.display.refresh()
