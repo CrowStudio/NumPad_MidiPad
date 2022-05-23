@@ -118,7 +118,6 @@ def configure_keypad(key_event):
 def set_button_mode(button_layout):
     global button_mode
     global key_map
-    global macropad
 
     if button_layout == 0:
         button_mode = 0
@@ -297,4 +296,3 @@ while True:
         last_knob_pos = macropad.encoder
 
     macropad.display.refresh()
-
