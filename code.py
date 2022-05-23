@@ -175,9 +175,11 @@ def send_encoder_click(encoder_pos):
     else:
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
+
 def toggle_row():
     global key_map
     global row_4
+
     if row[row_pos] == 4:
         row_4 = True
         key_map = row_map[1]
@@ -217,7 +219,7 @@ while True:
                         send_keypad_click(key)
                         characters_entered = f"{characters_entered}{key_map[key]}"
                         text_lines[1].text = f"{characters_entered}"
-                    if key_map[key] == "Enter":
+                    else:
                         send_keypad_click(key)
                         characters_entered = ""
                 if key_event.released:
@@ -235,7 +237,6 @@ while True:
                     macropad.midi.send(macropad.NoteOff(key_map[key], 0))
                     reset_pixel_to_bkgnd_color(key)
                     text_lines[2].text = ""
-                    #text_lines[1].text = "SampleOff:{}".format(key_map[key])
 
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
@@ -261,11 +262,10 @@ while True:
     if last_knob_pos is not macropad.encoder:  # knob has been turned
         knob_pos = macropad.encoder  # read encoder
         knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
-        last_knob_pos = knob_pos  # save new reading
-        encoder_pos = last_knob_pos % 10
-        row_pos = last_knob_pos % 2
+        last_knob_pos = knob_pos  # save new reading        
 
         if button_mode == 0:
+            encoder_pos = last_knob_pos % 10
             text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
 
         elif button_mode == 1:
@@ -285,9 +285,9 @@ while True:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
             
             elif encoder_mode == 3:
+                row_pos = last_knob_pos % 2
                 toggle_row()
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
-                
         last_knob_pos = macropad.encoder
 
     macropad.display.refresh()
