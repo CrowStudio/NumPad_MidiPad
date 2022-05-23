@@ -271,7 +271,7 @@ while True:
 
     if macropad.encoder_switch_debounced.pressed:
         loop_last_action = time.monotonic()
-        macropad.red_led = macropad.encoder_switchs
+        macropad.red_led = macropad.encoder_switch
 
     if macropad.encoder_switch_debounced.released:
         if button_mode == 0:
@@ -288,6 +288,7 @@ while True:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
             else:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+        macropad.red_led = macropad.encoder_switch
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
         loop_last_action = time.monotonic()
