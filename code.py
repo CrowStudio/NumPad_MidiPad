@@ -1,6 +1,19 @@
-# SPDX-FileCopyrightText: 2022 John Park for Adafruit Industries
-# SPDX-License-Identifier: MIT
-# Macropad MIDI Tester
+#  * Copyright 2022 Daniel Arvidsson <daniel.arvidsson@crowstudio.se>
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software 
+# Foundation, either version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+# 
+# You should have received a copy of the GNU General Public License along with this 
+# program. If not, see <https://www.gnu.org/licenses/>. 
+# 
+# Credits to John Park, Adafruit Industries 2022 - for Macropad MIDI Tester 
+# and JEP_NeoTrellis_Blackbox_Triggers - who got me started to developing this piece of code.
 
 from adafruit_macropad import MacroPad
 from rainbowio import colorwheel
