@@ -1,18 +1,18 @@
 #  * Copyright 2022 Daniel Arvidsson <daniel.arvidsson@crowstudio.se>
 #
 # This program is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software 
+# terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY 
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 # more details.
-# 
-# You should have received a copy of the GNU General Public License along with this 
-# program. If not, see <https://www.gnu.org/licenses/>. 
-# 
-# Credits to John Park, Adafruit Industries 2022 - for Macropad MIDI Tester 
+#
+# You should have received a copy of the GNU General Public License along with this
+# program. If not, see <https://www.gnu.org/licenses/>.
+#
+# Credits to John Park, Adafruit Industries 2022 - for Macropad MIDI Tester
 # and JEP_NeoTrellis_Blackbox_Triggers - who got me started to developing this piece of code.
 
 from adafruit_macropad import MacroPad
@@ -50,7 +50,7 @@ text_lines.show()
 
 encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
-row = [3,4]
+row = [3, 4]
 
 key_map = [['7', '8', '9',
             '4', '5', '6',
@@ -62,13 +62,13 @@ key_map = [['7', '8', '9',
             36, 37, 38]]
 
 row_map = [[48, 49, 50,
-           44, 45, 46,
-           40, 41, 42,
-           36, 37, 38],
-          [48, 49, 51,
-           44, 45, 47,
-           40, 41, 43,
-           36, 37, 39]]
+            44, 45, 46,
+            40, 41, 42,
+            36, 37, 38],
+           [48, 49, 51,
+            44, 45, 47,
+            40, 41, 43,
+            36, 37, 39]]
 
 keycode = [macropad.Keycode.KEYPAD_SEVEN,
            macropad.Keycode.KEYPAD_EIGHT,
@@ -96,6 +96,7 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
 
 button_mode = 2  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
 
+
 def configure_keypad(key_event):
     global config_mode
     global BKGND_COLOR
@@ -109,7 +110,7 @@ def configure_keypad(key_event):
             PRESSED_COLOR = WHITE
             macropad.pixels.brightness = 0.05
             set_pixel_color_mode()
-        if key_event.key_number == 2:
+        elif key_event.key_number == 2:
             set_button_mode(1)
             config_mode = 0
             BKGND_COLOR = MAGENTA
@@ -159,7 +160,7 @@ def set_button_mode_text():
         text_lines = macropad.display_text("BlackBox MIDI")
         text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
     return text_lines
-    
+
 
 def reset_pixel_to_bkgnd_color(key):
     set_background_colors(key)
@@ -174,6 +175,23 @@ def send_encoder_click(encoder_pos):
         return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_keycode[encoder_pos]), macropad.keyboard.release_all()
     else:
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
+
+
+def read_cc_value():
+    global knob_pos
+    global knob_delta
+    global last_knob_pos
+
+    knob_pos = macropad.encoder  # read encoder
+    knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
+    last_knob_pos = knob_pos  # save new reading
+    cc_values[encoder_mode] = min(
+        max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+
+
+def send_cc_value(cc_num):
+    macropad.midi.send(macropad.ControlChange(
+        cc_num, int(cc_values[encoder_mode]*4.1)))
 
 
 def toggle_row():
@@ -191,6 +209,8 @@ def toggle_row():
 
 
 last_knob_pos = macropad.encoder  # store knob position state
+knob_pos = 0
+knob_delta = 0
 encoder_mode = 3
 encoder_pos = 0
 row_pos = 0
@@ -222,7 +242,7 @@ while True:
                     else:
                         send_keypad_click(key)
                         characters_entered = ""
-                if key_event.released:
+                elif key_event.released:
                     key = key_event.key_number
                     reset_pixel_to_bkgnd_color(key)
 
@@ -232,7 +252,7 @@ while True:
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
                     macropad.pixels[key] = PRESSED_COLOR
                     text_lines[2].text = f"SampleOn:{key_map[key]}"
-                if key_event.released:
+                elif key_event.released:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOff(key_map[key], 0))
                     reset_pixel_to_bkgnd_color(key)
@@ -242,7 +262,7 @@ while True:
 
     if macropad.encoder_switch_debounced.pressed:
         macropad.red_led = macropad.encoder_switch
-        
+
     if macropad.encoder_switch_debounced.released:
         if button_mode == 0:
             send_encoder_click(encoder_pos)
@@ -260,9 +280,6 @@ while True:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
-        knob_pos = macropad.encoder  # read encoder
-        knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
-        last_knob_pos = knob_pos  # save new reading        
 
         if button_mode == 0:
             encoder_pos = last_knob_pos % 10
@@ -270,20 +287,20 @@ while True:
 
         elif button_mode == 1:
             if encoder_mode == 0:
-                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM0, int(cc_values[encoder_mode]*4.1)))
+                read_cc_value()
+                send_cc_value(CC_NUM0)
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
 
             elif encoder_mode == 1:
-                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM1, int(cc_values[encoder_mode]*4.1)))
+                read_cc_value()
+                send_cc_value(CC_NUM1)
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
 
             elif encoder_mode == 2:
-                cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
-                macropad.midi.send(macropad.ControlChange(CC_NUM2, int(cc_values[encoder_mode]*4.1)))
+                read_cc_value()
+                send_cc_value(CC_NUM2)
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-            
+
             elif encoder_mode == 3:
                 row_pos = last_knob_pos % 2
                 toggle_row()
