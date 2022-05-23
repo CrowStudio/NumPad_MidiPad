@@ -50,25 +50,20 @@ text_lines.show()
 
 encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
-row = [3, 4]
+key_map = []
 
-key_map = [['7', '8', '9',
-            '4', '5', '6',
-            '1', '2', '3',
-            ',', '0', 'Enter'],
-           [48, 49, 50,
-            44, 45, 46,
-            40, 41, 42,
-            36, 37, 38]]
-
-row_map = [[48, 49, 50,
-            44, 45, 46,
-            40, 41, 42,
-            36, 37, 38],
-           [48, 49, 51,
-            44, 45, 47,
-            40, 41, 43,
-            36, 37, 39]]
+key_maps = [['7', '8', '9',
+             '4', '5', '6',
+             '1', '2', '3',
+             ',', '0', 'Enter'],
+            [48, 49, 50,
+             44, 45, 46,
+             40, 41, 42,
+             36, 37, 38],
+            [48, 49, 51,
+             44, 45, 47,
+             40, 41, 43,
+             36, 37, 39]]
 
 keycode = [macropad.Keycode.KEYPAD_SEVEN,
            macropad.Keycode.KEYPAD_EIGHT,
@@ -126,14 +121,10 @@ def set_button_mode(button_layout):
 
     if button_layout == 0:
         button_mode = 0
-        key_map = key_maps(0)
+        key_map = key_maps[0]
     elif button_layout == 1:
         button_mode = 1
-        key_map = key_maps(1)
-
-
-def key_maps(map):
-    return key_map[map]
+        key_map = key_maps[1]
 
 
 def set_pixel_color_mode():
@@ -198,14 +189,13 @@ def toggle_row():
     global key_map
     global row_4
 
-    if row[row_pos] == 4:
-        row_4 = True
-        key_map = row_map[1]
-        set_pixel_color_mode()
-    else:
+    if row[row_pos] == 3:
         row_4 = False
-        set_pixel_color_mode()
-        key_map = row_map[0]
+        key_map = key_maps[1]
+    else:
+        row_4 = True
+        key_map = key_maps[2]
+    set_pixel_color_mode()
 
 
 last_knob_pos = macropad.encoder  # store knob position state
