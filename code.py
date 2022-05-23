@@ -50,6 +50,8 @@ text_lines.show()
 
 encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
+row = [3, 4]
+
 key_map = []
 
 key_maps = [['7', '8', '9',
@@ -90,7 +92,6 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
                    macropad.Keycode.KEYPAD_EQUALS]
 
 button_mode = 2  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
-
 
 def configure_keypad(key_event):
     global config_mode
@@ -176,13 +177,11 @@ def read_cc_value():
     knob_pos = macropad.encoder  # read encoder
     knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
     last_knob_pos = knob_pos  # save new reading
-    cc_values[encoder_mode] = min(
-        max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+    cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
 
 
 def send_cc_value(cc_num):
-    macropad.midi.send(macropad.ControlChange(
-        cc_num, int(cc_values[encoder_mode]*4.1)))
+    macropad.midi.send(macropad.ControlChange(cc_num, int(cc_values[encoder_mode]*4.1)))
 
 
 def toggle_row():
@@ -298,3 +297,4 @@ while True:
         last_knob_pos = macropad.encoder
 
     macropad.display.refresh()
+
