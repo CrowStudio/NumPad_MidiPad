@@ -17,8 +17,8 @@
 
 from adafruit_macropad import MacroPad
 from rainbowio import colorwheel
+import time
 
-# --- Pixel Colors --- #
 WHITE = (255, 255, 255)
 YELLOW = (230, 100, 0)
 CYAN = (0, 255, 255)
@@ -27,6 +27,8 @@ MINT = (0, 255, 50)
 
 BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
+
+SCREEN_ACTIVE = 60
 
 CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
@@ -43,6 +45,7 @@ macropad.pixels[0] = YELLOW
 macropad.pixels[2] = MAGENTA
 
 # --- Display text setup --- #
+blank_display = macropad.display_text("")
 text_lines = macropad.display_text("Choose MacroPad mode:")
 text_lines[0].text = "Yellow = NumPad"
 text_lines[1].text = "Magenta = BlackBox"
@@ -168,19 +171,27 @@ def send_encoder_click(encoder_pos):
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
 
-def read_cc_value():
+def read_knob_value(knob):
     global knob_pos
+    global encoder_pos
+    global row_pos
     global knob_delta
     global last_knob_pos
 
-    knob_pos = macropad.encoder  # read encoder
-    knob_delta = knob_pos - last_knob_pos  # compute knob_delta since last read
-    last_knob_pos = knob_pos  # save new reading
-    cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+    if button_mode == 0:
+        encoder_pos = macropad.encoder % 10
+    elif button_mode == 1 and knob in [0, 1, 2]:
+        knob_pos = macropad.encoder
+        knob_delta = knob_pos - last_knob_pos
+        last_knob_pos = knob_pos
+        cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+    else:
+        row_pos = macropad.encoder % 2 
 
 
-def send_cc_value(cc_num):
-    macropad.midi.send(macropad.ControlChange(cc_num, int(cc_values[encoder_mode]*4.1)))
+def send_cc_value(num):
+    CC = [CC_NUM0, CC_NUM1, CC_NUM2]
+    macropad.midi.send(macropad.ControlChange(CC[num], int(cc_values[encoder_mode]*4.1)))
 
 
 def toggle_row():
@@ -210,7 +221,11 @@ row_4 = False
 
 characters_entered = ""
 
+loop_last_action = time.monotonic()
+macropad_sleep = False
+
 while True:
+    loop_start_time = time.monotonic()
     if macropad.keys.events:  # check for key press or release
         text_lines.show()
         key_event = macropad.keys.events.get()
@@ -220,7 +235,10 @@ while True:
 
         elif key_event:
             if button_mode == 0:
-                if key_event.pressed:
+                if key_event.pressed and macropad_sleep:
+                    macropad_sleep = False
+                    loop_last_action = time.monotonic()
+                elif key_event.pressed:
                     key = key_event.key_number
                     macropad.pixels[key] = PRESSED_COLOR
                     if key_map[key] != "Enter":
@@ -235,7 +253,10 @@ while True:
                     reset_pixel_to_bkgnd_color(key)
 
             if button_mode == 1:
-                if key_event.pressed:
+                if key_event.pressed and macropad_sleep:
+                    macropad_sleep = False
+                    loop_last_action = time.monotonic()
+                elif key_event.pressed:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
                     macropad.pixels[key] = PRESSED_COLOR
@@ -249,7 +270,8 @@ while True:
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
     if macropad.encoder_switch_debounced.pressed:
-        macropad.red_led = macropad.encoder_switch
+        loop_last_action = time.monotonic()
+        macropad.red_led = macropad.encoder_switchs
 
     if macropad.encoder_switch_debounced.released:
         if button_mode == 0:
@@ -268,31 +290,30 @@ while True:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
-
+        loop_last_action = time.monotonic()
         if button_mode == 0:
-            encoder_pos = last_knob_pos % 10
+            read_knob_value(0)
             text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
 
         elif button_mode == 1:
-            if encoder_mode == 0:
-                read_cc_value()
-                send_cc_value(CC_NUM0)
+            if encoder_mode in [0, 1, 2]:
+                read_knob_value(encoder_mode)
+                send_cc_value(encoder_mode)
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
 
-            elif encoder_mode == 1:
-                read_cc_value()
-                send_cc_value(CC_NUM1)
-                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-
-            elif encoder_mode == 2:
-                read_cc_value()
-                send_cc_value(CC_NUM2)
-                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-
-            elif encoder_mode == 3:
-                row_pos = last_knob_pos % 2
+            else:
+                read_knob_value(3)
                 toggle_row()
                 text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
         last_knob_pos = macropad.encoder
+
+    if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
+        macropad.pixels.brightness = 0
+        macropad_sleep = True
+        blank_display.show()
+    elif (loop_start_time - loop_last_action) < SCREEN_ACTIVE:
+        macropad.pixels.brightness = 0.05
+        macropad_sleep = False
+        text_lines.show()
 
     macropad.display.refresh()
