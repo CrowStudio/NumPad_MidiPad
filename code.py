@@ -370,14 +370,5 @@ while True:
             toggle_enocder_mode()
         macropad.red_led = macropad.encoder_switch
 
-    if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
-        macropad.pixels.brightness = 0
-        macropad_sleep = True
-        blank_display.show()
-    elif (loop_start_time - loop_last_action) < SCREEN_ACTIVE:
-        macropad.pixels.brightness = 0.05
-        macropad_sleep = False
-        text_lines.show()
-
     check_for_screensaver()
     macropad.display.refresh()
