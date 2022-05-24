@@ -28,7 +28,7 @@ MINT = (0, 255, 50)
 BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
-SCREEN_ACTIVE = 10
+SCREEN_ACTIVE = 60
 
 CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
@@ -180,6 +180,25 @@ def send_numpad_key_press():
         characters_entered = ""
 
 
+def send_midi_key_press():
+    global text_lines
+
+    loop_last_action = time.monotonic()
+    key = key_event.key_number
+    macropad.midi.send(macropad.NoteOn(key_map[key], 120))
+    macropad.pixels[key] = PRESSED_COLOR
+    text_lines[2].text = f"SampleOn:{key_map[key]}"
+
+
+def send_midi_key_release():
+    global text_lines
+
+    key = key_event.key_number
+    macropad.midi.send(macropad.NoteOff(key_map[key], 0))
+    reset_pixel_to_bkgnd_color()
+    text_lines[2].text = ""
+
+
 def reset_pixel_to_bkgnd_color():
     key = key_event.key_number
     set_background_colors(key)
@@ -189,11 +208,21 @@ def send_keypad_click(key):
     return macropad.keyboard.send(keycode[key])
 
 
-def send_encoder_click(encoder_pos):
+def send_encoder_click():
+    global characters_entered
+    global text_lines
+
+    if encoder_map[encoder_pos] == "<-":
+        characters_entered = characters_entered[:-1]
+    else:
+        characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
+    text_lines[1].text = f"{characters_entered}"
+
     if encoder_pos in [4, 5, 6]:
         return macropad.keyboard.press(macropad.Keycode.SHIFT, encoder_keycode[encoder_pos]), macropad.keyboard.release_all()
     else:
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
+
 
 
 def read_knob_value(knob):
@@ -201,17 +230,21 @@ def read_knob_value(knob):
     global encoder_pos
     global row_pos
     global knob_delta
+    global read_diff
     global last_knob_pos
 
-    if button_mode == "NumPad":
+    if button_mode == "MidiCtrl":
+        if knob == 3:
+            read_diff = row_pos - last_knob_pos
+            row_pos = (macropad.encoder + read_diff) % 2
+        else:
+            knob_pos = macropad.encoder
+            knob_delta = knob_pos - last_knob_pos
+            last_knob_pos = knob_pos
+            cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+
+    elif button_mode == "NumPad":
         encoder_pos = macropad.encoder % 10
-    elif button_mode == "MidiCtrl" and knob in [0, 1, 2]:
-        knob_pos = macropad.encoder
-        knob_delta = knob_pos - last_knob_pos
-        last_knob_pos = knob_pos
-        cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
-    else:
-        row_pos = macropad.encoder % 2 
 
 
 def send_cc_value(num):
@@ -235,6 +268,7 @@ def toggle_row():
 last_knob_pos = macropad.encoder  # store knob position state
 knob_pos = 0
 knob_delta = 0
+read_diff = 0
 encoder_mode = 3
 encoder_pos = 0
 row_pos = 0
@@ -253,10 +287,10 @@ key_active = False
 while True:
     loop_start_time = time.monotonic()
     text_lines.show()
-    
+
     if macropad.keys.events:  # check for key press or release
         key_event = macropad.keys.events.get()
-        
+
         if button_mode == "INIT":
             configure_keypad()
 
@@ -275,15 +309,9 @@ while True:
 
             if button_mode == "MidiCtrl" and key_active:
                 if key_event.pressed:
-                    key = key_event.key_number
-                    macropad.midi.send(macropad.NoteOn(key_map[key], 120))
-                    macropad.pixels[key] = PRESSED_COLOR
-                    text_lines[2].text = f"SampleOn:{key_map[key]}"
+                    send_midi_key_press()
                 elif key_event.released:
-                    key = key_event.key_number
-                    macropad.midi.send(macropad.NoteOff(key_map[key], 0))
-                    reset_pixel_to_bkgnd_color()
-                    text_lines[2].text = ""
+                    send_midi_key_release()
 
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
@@ -293,12 +321,7 @@ while True:
 
     if macropad.encoder_switch_debounced.released:
         if button_mode == "NumPad":
-            send_encoder_click(encoder_pos)
-            if encoder_map[encoder_pos] == "<-":
-            	characters_entered = characters_entered[:-1]
-            else:
-                characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
-            text_lines[1].text = f"{characters_entered}"
+            send_encoder_click()
 
         if button_mode == "MidiCtrl":
             encoder_mode = (encoder_mode+1) % 4
