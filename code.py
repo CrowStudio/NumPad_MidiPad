@@ -28,16 +28,15 @@ MINT = (0, 255, 50)
 BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
-SCREEN_ACTIVE = 60
+SCREEN_ACTIVE = 10
 
 CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
 CC_NUM2 = 1  # Modulation Wheel
 
-# create the macropad object, rotate orientation, set state for startup config
+# create the macropad object, rotate orientation
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
-config_mode = 1
 
 # --- Pixel setup --- #
 macropad.pixels.brightness = 0.05
@@ -94,28 +93,28 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
                    macropad.Keycode.PERIOD,
                    macropad.Keycode.KEYPAD_EQUALS]
 
-button_mode = 2  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
+button_configuration = ["NumPad", "MidiCtrl", "INIT"]
+button_mode = button_configuration[2]  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
 
-def configure_keypad(key_event):
-    global config_mode
+def configure_keypad():
     global BKGND_COLOR
     global PRESSED_COLOR
+    global text_lines
 
     if key_event.pressed:
         if key_event.key_number == 0:
             set_button_mode(0)
-            config_mode = 0
             BKGND_COLOR = YELLOW
             PRESSED_COLOR = WHITE
             macropad.pixels.brightness = 0.05
             set_pixel_color_mode()
         elif key_event.key_number == 2:
             set_button_mode(1)
-            config_mode = 0
             BKGND_COLOR = MAGENTA
             PRESSED_COLOR = CYAN
             macropad.pixels.brightness = 0.05
             set_pixel_color_mode()
+    text_lines = set_button_mode_text()
 
 
 def set_button_mode(button_layout):
@@ -123,10 +122,10 @@ def set_button_mode(button_layout):
     global key_map
 
     if button_layout == 0:
-        button_mode = 0
+        button_mode = button_configuration[0]
         key_map = key_maps[0]
     elif button_layout == 1:
-        button_mode = 1
+        button_mode = button_configuration[1]
         key_map = key_maps[1]
 
 
@@ -136,9 +135,9 @@ def set_pixel_color_mode():
 
 
 def set_background_colors(key):
-    if key == 9 and button_mode == 0:
+    if key == 9 and button_mode == "NumPad":
         macropad.pixels[key] = CYAN
-    elif key == 11 and button_mode == 0:
+    elif key == 11 and button_mode == "NumPad":
         macropad.pixels[key] = MAGENTA
     elif key in [2, 5, 8, 11] and row_4 == True:
         macropad.pixels[key] = MINT
@@ -147,16 +146,42 @@ def set_background_colors(key):
 
 
 def set_button_mode_text():
-    if button_mode == 0:
+    if button_mode == "NumPad":
         text_lines = macropad.display_text("NumPad")
         text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
-    elif button_mode == 1:
+    elif button_mode == "MidiCtrl":
         text_lines = macropad.display_text("BlackBox MIDI")
         text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
     return text_lines
 
 
-def reset_pixel_to_bkgnd_color(key):
+def deactivate_screen_saver():
+    global macropad_sleep
+    global loop_last_action
+    
+    macropad_sleep = False
+    loop_last_action = time.monotonic()
+
+
+def send_numpad_key_press():
+    global characters_entered
+    global text_lines
+    global loop_last_action
+
+    loop_last_action = time.monotonic()
+    key = key_event.key_number
+    macropad.pixels[key] = PRESSED_COLOR
+    if key_map[key] != "Enter":
+        send_keypad_click(key)
+        characters_entered = f"{characters_entered}{key_map[key]}"
+        text_lines[1].text = f"{characters_entered}"
+    else:
+        send_keypad_click(key)
+        characters_entered = ""
+
+
+def reset_pixel_to_bkgnd_color():
+    key = key_event.key_number
     set_background_colors(key)
 
 
@@ -178,9 +203,9 @@ def read_knob_value(knob):
     global knob_delta
     global last_knob_pos
 
-    if button_mode == 0:
+    if button_mode == "NumPad":
         encoder_pos = macropad.encoder % 10
-    elif button_mode == 1 and knob in [0, 1, 2]:
+    elif button_mode == "MidiCtrl" and knob in [0, 1, 2]:
         knob_pos = macropad.encoder
         knob_delta = knob_pos - last_knob_pos
         last_knob_pos = knob_pos
@@ -226,37 +251,26 @@ macropad_sleep = False
 
 while True:
     loop_start_time = time.monotonic()
+    text_lines.show()
+    
     if macropad.keys.events:  # check for key press or release
-        text_lines.show()
         key_event = macropad.keys.events.get()
-        if config_mode == 1:
-            configure_keypad(key_event)
-            text_lines = set_button_mode_text()
+        
+        if button_mode == "INIT":
+            configure_keypad()
+
+        if key_event.pressed and macropad_sleep:
+            deactivate_screen_saver()
 
         elif key_event:
-            if button_mode == 0:
-                if key_event.pressed and macropad_sleep:
-                    macropad_sleep = False
-                    loop_last_action = time.monotonic()
-                elif key_event.pressed:
-                    key = key_event.key_number
-                    macropad.pixels[key] = PRESSED_COLOR
-                    if key_map[key] != "Enter":
-                        send_keypad_click(key)
-                        characters_entered = f"{characters_entered}{key_map[key]}"
-                        text_lines[1].text = f"{characters_entered}"
-                    else:
-                        send_keypad_click(key)
-                        characters_entered = ""
+            if button_mode == "NumPad":
+                if key_event.pressed:
+                    send_numpad_key_press()
                 elif key_event.released:
-                    key = key_event.key_number
-                    reset_pixel_to_bkgnd_color(key)
+                    reset_pixel_to_bkgnd_color()
 
-            if button_mode == 1:
-                if key_event.pressed and macropad_sleep:
-                    macropad_sleep = False
-                    loop_last_action = time.monotonic()
-                elif key_event.pressed:
+            if button_mode == "MidiCtrl":
+                if key_event.pressed:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
                     macropad.pixels[key] = PRESSED_COLOR
@@ -264,7 +278,7 @@ while True:
                 elif key_event.released:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOff(key_map[key], 0))
-                    reset_pixel_to_bkgnd_color(key)
+                    reset_pixel_to_bkgnd_color()
                     text_lines[2].text = ""
 
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
@@ -274,7 +288,7 @@ while True:
         macropad.red_led = macropad.encoder_switch
 
     if macropad.encoder_switch_debounced.released:
-        if button_mode == 0:
+        if button_mode == "NumPad":
             send_encoder_click(encoder_pos)
             if encoder_map[encoder_pos] == "<-":
             	characters_entered = characters_entered[:-1]
@@ -282,7 +296,7 @@ while True:
                 characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
             text_lines[1].text = f"{characters_entered}"
 
-        if button_mode == 1:
+        if button_mode == "MidiCtrl":
             encoder_mode = (encoder_mode+1) % 4
             if encoder_mode in [0, 1, 2]:
                 text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
@@ -292,11 +306,11 @@ while True:
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
         loop_last_action = time.monotonic()
-        if button_mode == 0:
+        if button_mode == "NumPad":
             read_knob_value(0)
             text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
 
-        elif button_mode == 1:
+        elif button_mode == "MidiCtrl":
             if encoder_mode in [0, 1, 2]:
                 read_knob_value(encoder_mode)
                 send_cc_value(encoder_mode)
