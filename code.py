@@ -244,6 +244,7 @@ def read_knob_value(encoder_mode):
     global last_knob_pos
     global text_lines
 
+    loop_last_action = time.monotonic()
     if button_mode == "MidiCtrl":
         if encoder_mode == 3:
             read_diff = row_pos - last_knob_pos
@@ -344,7 +345,6 @@ while True:
                     send_midi_key_release()
 
     if last_knob_pos is not macropad.encoder:  # knob has been turned
-        loop_last_action = time.monotonic()
         if button_mode == "NumPad":
             read_knob_value(0)
 
