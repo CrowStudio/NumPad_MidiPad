@@ -282,7 +282,7 @@ def toggle_row():
     set_pixel_color_mode()
 
 
-def check_screen_saver():
+def check_for_screensaver():
     global macropad_sleep
 
     if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
@@ -379,5 +379,5 @@ while True:
         macropad_sleep = False
         text_lines.show()
 
-    check_screen_saver()
+    check_for_screensaver()
     macropad.display.refresh()
