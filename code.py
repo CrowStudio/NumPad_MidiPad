@@ -224,19 +224,31 @@ def send_encoder_click():
         return macropad.keyboard.send(encoder_keycode[encoder_pos])
 
 
+def toggle_enocder_mode():
+    global encoder_mode
+    global text_lines
 
-def read_knob_value(knob):
+    encoder_mode = (encoder_mode +1) % 4
+    if encoder_mode in [0, 1, 2]:
+        text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
+    else:
+        text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+
+
+def read_knob_value(encoder_mode):
     global knob_pos
     global encoder_pos
     global row_pos
     global knob_delta
     global read_diff
     global last_knob_pos
+    global text_lines
 
     if button_mode == "MidiCtrl":
-        if knob == 3:
+        if encoder_mode == 3:
             read_diff = row_pos - last_knob_pos
             row_pos = (macropad.encoder + read_diff) % 2
+            text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
         else:
             knob_pos = macropad.encoder
             knob_delta = knob_pos - last_knob_pos
@@ -245,11 +257,16 @@ def read_knob_value(knob):
 
     elif button_mode == "NumPad":
         encoder_pos = macropad.encoder % 10
+        text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
+    last_knob_pos = macropad.encoder
 
 
 def send_cc_value(num):
+    global text_lines
+
     CC = [CC_NUM0, CC_NUM1, CC_NUM2]
     macropad.midi.send(macropad.ControlChange(CC[num], int(cc_values[encoder_mode]*4.1)))
+    text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
 
 
 def toggle_row():
@@ -313,6 +330,19 @@ while True:
                 elif key_event.released:
                     send_midi_key_release()
 
+    if last_knob_pos is not macropad.encoder:  # knob has been turned
+        loop_last_action = time.monotonic()
+        if button_mode == "NumPad":
+            read_knob_value(0)
+
+        elif button_mode == "MidiCtrl":
+            if encoder_mode in [0, 1, 2]:
+                read_knob_value(encoder_mode)
+                send_cc_value(encoder_mode)
+            else:
+                read_knob_value(3)
+                toggle_row()
+
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
     if macropad.encoder_switch_debounced.pressed:
@@ -324,30 +354,8 @@ while True:
             send_encoder_click()
 
         if button_mode == "MidiCtrl":
-            encoder_mode = (encoder_mode+1) % 4
-            if encoder_mode in [0, 1, 2]:
-                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-            else:
-                text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+            toggle_enocder_mode()
         macropad.red_led = macropad.encoder_switch
-
-    if last_knob_pos is not macropad.encoder:  # knob has been turned
-        loop_last_action = time.monotonic()
-        if button_mode == "NumPad":
-            read_knob_value(0)
-            text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
-
-        elif button_mode == "MidiCtrl":
-            if encoder_mode in [0, 1, 2]:
-                read_knob_value(encoder_mode)
-                send_cc_value(encoder_mode)
-                text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
-
-            else:
-                read_knob_value(3)
-                toggle_row()
-                text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
-        last_knob_pos = macropad.encoder
 
     if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
         macropad.pixels.brightness = 0
