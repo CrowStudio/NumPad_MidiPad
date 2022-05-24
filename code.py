@@ -282,6 +282,19 @@ def toggle_row():
     set_pixel_color_mode()
 
 
+def check_screen_saver():
+    global macropad_sleep
+
+    if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
+        macropad.pixels.brightness = 0
+        macropad_sleep = True
+        blank_display.show()
+    elif (loop_start_time - loop_last_action) < SCREEN_ACTIVE:
+        macropad.pixels.brightness = 0.05
+        macropad_sleep = False
+        text_lines.show()
+
+
 last_knob_pos = macropad.encoder  # store knob position state
 knob_pos = 0
 knob_delta = 0
@@ -366,4 +379,5 @@ while True:
         macropad_sleep = False
         text_lines.show()
 
+    check_screen_saver()
     macropad.display.refresh()
