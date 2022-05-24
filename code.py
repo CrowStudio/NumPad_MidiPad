@@ -248,6 +248,7 @@ characters_entered = ""
 
 loop_last_action = time.monotonic()
 macropad_sleep = False
+key_active = False
 
 while True:
     loop_start_time = time.monotonic()
@@ -262,14 +263,17 @@ while True:
         if key_event.pressed and macropad_sleep:
             deactivate_screen_saver()
 
+        elif key_event.pressed and not key_active:
+            key_active = True
+
         elif key_event:
-            if button_mode == "NumPad":
+            if button_mode == "NumPad" and key_active:
                 if key_event.pressed:
                     send_numpad_key_press()
                 elif key_event.released:
                     reset_pixel_to_bkgnd_color()
 
-            if button_mode == "MidiCtrl":
+            if button_mode == "MidiCtrl" and key_active:
                 if key_event.pressed:
                     key = key_event.key_number
                     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
