@@ -29,6 +29,7 @@ BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
 SCREEN_ACTIVE = 60
+RESET_ENTERED_CHAR = 5
 
 CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
@@ -94,7 +95,8 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
                    macropad.Keycode.KEYPAD_EQUALS]
 
 button_configuration = ["NumPad", "MidiCtrl", "INIT"]
-button_mode = button_configuration[2]  # button_mode 0 for NumPad / button_mode 1 for BlackBox / 2 is init mode
+button_mode = button_configuration[2]
+
 
 def configure_keypad():
     global BKGND_COLOR
@@ -157,33 +159,36 @@ def set_button_mode_text():
 
 def deactivate_screen_saver():
     global macropad_sleep
-    global loop_last_action
-    
+    global time_of_last_action
+
     macropad_sleep = False
-    loop_last_action = time.monotonic()
+    time_of_last_action = time.monotonic()
 
 
 def send_numpad_key_press():
+    global time_of_last_action
     global characters_entered
+    global clear_screen
     global text_lines
-    global loop_last_action
 
-    loop_last_action = time.monotonic()
+    time_of_last_action = time.monotonic()
     key = key_event.key_number
     macropad.pixels[key] = PRESSED_COLOR
-    if key_map[key] != "Enter":
-        send_keypad_click(key)
-        characters_entered = f"{characters_entered}{key_map[key]}"
-        text_lines[1].text = f"{characters_entered}"
-    else:
+    if key_map[key] == "Enter":
         send_keypad_click(key)
         characters_entered = ""
+        clear_screen = True
+    else:
+        send_keypad_click(key)
+        clear_screen = False
+        characters_entered = f"{characters_entered}{key_map[key]}"
+        text_lines[1].text = f"{characters_entered}"
 
 
 def send_midi_key_press():
     global text_lines
 
-    loop_last_action = time.monotonic()
+    time_of_last_action = time.monotonic()
     key = key_event.key_number
     macropad.midi.send(macropad.NoteOn(key_map[key], 120))
     macropad.pixels[key] = PRESSED_COLOR
@@ -228,7 +233,7 @@ def toggle_enocder_mode():
     global encoder_mode
     global text_lines
 
-    encoder_mode = (encoder_mode +1) % 4
+    encoder_mode = (encoder_mode + 1) % 4
     if encoder_mode in [0, 1, 2]:
         text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
     else:
@@ -244,7 +249,7 @@ def read_knob_value(encoder_mode):
     global last_knob_pos
     global text_lines
 
-    loop_last_action = time.monotonic()
+    time_of_last_action = time.monotonic()
     if button_mode == "MidiCtrl":
         if encoder_mode == 3:
             read_diff = row_pos - last_knob_pos
@@ -283,14 +288,23 @@ def toggle_row():
     set_pixel_color_mode()
 
 
+def clear_numpad_screen():
+    global text_lines
+    global clear_screen
+
+    if (loop_time - time_of_last_action) > RESET_ENTERED_CHAR:
+        text_lines[1].text = f"{characters_entered}"
+        clear_screen = False
+
+
 def check_for_screensaver():
     global macropad_sleep
 
-    if (loop_start_time - loop_last_action) > SCREEN_ACTIVE:
+    if (loop_time - time_of_last_action) > SCREEN_ACTIVE:
         macropad.pixels.brightness = 0
         macropad_sleep = True
         blank_display.show()
-    elif (loop_start_time - loop_last_action) < SCREEN_ACTIVE:
+    elif (loop_time - time_of_last_action) < SCREEN_ACTIVE:
         macropad.pixels.brightness = 0.05
         macropad_sleep = False
         text_lines.show()
@@ -311,12 +325,13 @@ row_4 = False
 
 characters_entered = ""
 
-loop_last_action = time.monotonic()
+time_of_last_action = time.monotonic()
 macropad_sleep = False
 key_active = False
+clear_screen = False
 
 while True:
-    loop_start_time = time.monotonic()
+    loop_time = time.monotonic()
     text_lines.show()
 
     if macropad.keys.events:  # check for key press or release
@@ -359,7 +374,7 @@ while True:
     macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
 
     if macropad.encoder_switch_debounced.pressed:
-        loop_last_action = time.monotonic()
+        time_of_last_action = time.monotonic()
         macropad.red_led = macropad.encoder_switch
 
     if macropad.encoder_switch_debounced.released:
@@ -370,5 +385,7 @@ while True:
             toggle_enocder_mode()
         macropad.red_led = macropad.encoder_switch
 
+    if clear_screen:
+        clear_numpad_screen()
     check_for_screensaver()
     macropad.display.refresh()
