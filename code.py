@@ -165,7 +165,6 @@ def send_numpad_key_press():
     macropad.pixels[key] = PRESSED_COLOR
     if key_map[key] == "Enter":
         send_keypad_click(key)
-        characters_entered = ""
         clear_screen = True
     else:
         send_keypad_click(key)
@@ -211,6 +210,8 @@ def send_encoder_click():
     time_of_last_action = time.monotonic()
     if encoder_map[encoder_pos] == "<-":
         characters_entered = characters_entered[:-1]
+    elif encoder_map[encoder_pos] == "=":
+        clear_screen = True
     else:
         characters_entered = f"{characters_entered}{encoder_map[encoder_pos]}"
     text_lines[1].text = f"{characters_entered}"
@@ -248,7 +249,7 @@ def read_knob_value(encoder_mode):
     if button_mode == "NumPad":
         encoder_pos = macropad.encoder % 10
         text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
-        
+
     elif button_mode == "MidiCtrl":
         if encoder_mode == 3:
             read_diff = row_pos - last_knob_pos
@@ -284,9 +285,11 @@ def toggle_row():
 
 
 def clear_entered_characters():
+    global characters_entered
     global text_lines
     global clear_screen
 
+    characters_entered = ""
     if (loop_time - time_of_last_action) > RESET_ENTERED_CHAR:
         text_lines[1].text = f"{characters_entered}"
         clear_screen = False
