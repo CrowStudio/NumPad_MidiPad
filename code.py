@@ -16,7 +16,6 @@
 # and JEP_NeoTrellis_Blackbox_Triggers - who got me started to developing this piece of code.
 
 from adafruit_macropad import MacroPad
-from rainbowio import colorwheel
 import time
 
 WHITE = (255, 255, 255)
@@ -92,20 +91,20 @@ def configure_keypad():
     global text_lines
 
     time_of_last_action = time.monotonic()
-    if key_event.pressed:
-        if key_event.key_number == 0:
-            set_button_mode(0)
-            BKGND_COLOR = YELLOW
-            PRESSED_COLOR = WHITE
-            macropad.pixels.brightness = 0.05
-            set_pixel_color_mode()
-        elif key_event.key_number == 2:
-            set_button_mode(1)
-            BKGND_COLOR = MAGENTA
-            PRESSED_COLOR = CYAN
-            macropad.pixels.brightness = 0.05
-            set_pixel_color_mode()
-    text_lines = set_button_mode_text()
+    if key_event.key_number == 0:
+        set_button_mode(0)
+        macropad.pixels.brightness = 0.05
+        BKGND_COLOR = YELLOW
+        PRESSED_COLOR = WHITE
+        set_pixel_color_mode()
+    elif key_event.key_number == 2:
+        set_button_mode(1)
+        macropad.pixels.brightness = 0.05
+        BKGND_COLOR = MAGENTA
+        PRESSED_COLOR = CYAN
+        set_pixel_color_mode()
+    if button_mode != "INIT":
+        text_lines = set_button_mode_text()
 
 
 def set_button_mode(button_layout):
