@@ -327,7 +327,7 @@ time_of_last_action = time.monotonic()
 macropad_sleep = False
 clear_screen = False
 
-macropad.display_image("CrowStudio_logo.bmp")
+macropad.display_image("img/CrowStudio_logo.bmp")
 time.sleep(3)
 
 # --- Display text setup --- #
