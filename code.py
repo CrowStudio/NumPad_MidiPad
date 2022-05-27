@@ -39,18 +39,6 @@ CC_NUM2 = 1  # Modulation Wheel
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
 
-# --- Pixel setup --- #
-macropad.pixels.brightness = 0.05
-macropad.pixels[0] = YELLOW
-macropad.pixels[2] = MAGENTA
-
-# --- Display text setup --- #
-blank_display = macropad.display_text("")
-text_lines = macropad.display_text("Choose MacroPad mode:")
-text_lines[0].text = "Yellow = NumPad"
-text_lines[1].text = "Magenta = BlackBox"
-text_lines.show()
-
 encoder_map = ["+", "-", "*", "/", "(", ")", "%", "<-", ".", "="]
 
 row = [3, 4]
@@ -97,12 +85,13 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
 button_configuration = ["NumPad", "MidiCtrl", "INIT"]
 button_mode = button_configuration[2]
 
-
 def configure_keypad():
+    global time_of_last_action
     global BKGND_COLOR
     global PRESSED_COLOR
     global text_lines
 
+    time_of_last_action = time.monotonic()
     if key_event.pressed:
         if key_event.key_number == 0:
             set_button_mode(0)
@@ -214,9 +203,12 @@ def send_keypad_click(key):
 
 
 def send_encoder_click():
+    global time_of_last_action
+    global clear_screen
     global characters_entered
     global text_lines
 
+    time_of_last_action = time.monotonic()
     if encoder_map[encoder_pos] == "<-":
         characters_entered = characters_entered[:-1]
     else:
@@ -230,9 +222,11 @@ def send_encoder_click():
 
 
 def toggle_enocder_mode():
+    global time_of_last_action
     global encoder_mode
     global text_lines
 
+    time_of_last_action = time.monotonic()
     encoder_mode = (encoder_mode + 1) % 4
     if encoder_mode in [0, 1, 2]:
         text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
@@ -241,6 +235,7 @@ def toggle_enocder_mode():
 
 
 def read_knob_value(encoder_mode):
+    global time_of_last_action
     global knob_pos
     global encoder_pos
     global row_pos
@@ -250,7 +245,11 @@ def read_knob_value(encoder_mode):
     global text_lines
 
     time_of_last_action = time.monotonic()
-    if button_mode == "MidiCtrl":
+    if button_mode == "NumPad":
+        encoder_pos = macropad.encoder % 10
+        text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
+        
+    elif button_mode == "MidiCtrl":
         if encoder_mode == 3:
             read_diff = row_pos - last_knob_pos
             row_pos = (macropad.encoder + read_diff) % 2
@@ -260,10 +259,6 @@ def read_knob_value(encoder_mode):
             knob_delta = knob_pos - last_knob_pos
             last_knob_pos = knob_pos
             cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
-
-    elif button_mode == "NumPad":
-        encoder_pos = macropad.encoder % 10
-        text_lines[0].text = f"Encoder character: {encoder_map[encoder_pos]}"
     last_knob_pos = macropad.encoder
 
 
@@ -288,7 +283,7 @@ def toggle_row():
     set_pixel_color_mode()
 
 
-def clear_numpad_screen():
+def clear_entered_characters():
     global text_lines
     global clear_screen
 
@@ -327,40 +322,53 @@ characters_entered = ""
 
 time_of_last_action = time.monotonic()
 macropad_sleep = False
-key_active = False
 clear_screen = False
+
+macropad.display_image("CrowStudio_logo.bmp")
+time.sleep(3)
+
+# --- Display text setup --- #
+blank_display = macropad.display_text("")
+text_lines = macropad.display_text("Choose MacroPad mode:")
+text_lines[0].text = "Yellow = NumPad"
+text_lines[1].text = "Magenta = BlackBox"
+text_lines.show()
+
+# --- Pixel setup --- #
+macropad.pixels.brightness = 0.05
+macropad.pixels[0] = YELLOW
+macropad.pixels[2] = MAGENTA
 
 while True:
     loop_time = time.monotonic()
     text_lines.show()
-
     if macropad.keys.events:  # check for key press or release
         key_event = macropad.keys.events.get()
 
         if button_mode == "INIT":
             configure_keypad()
 
-        if key_event.pressed and macropad_sleep:
+        elif key_event.pressed and macropad_sleep:
             deactivate_screen_saver()
 
-        elif key_event.pressed and not key_active:
-            key_active = True
-
         elif key_event:
-            if button_mode == "NumPad" and key_active:
+            if button_mode == "NumPad":
                 if key_event.pressed:
                     send_numpad_key_press()
                 elif key_event.released:
                     reset_pixel_to_bkgnd_color()
 
-            if button_mode == "MidiCtrl" and key_active:
+            elif button_mode == "MidiCtrl":
                 if key_event.pressed:
                     send_midi_key_press()
                 elif key_event.released:
                     send_midi_key_release()
 
-    if last_knob_pos is not macropad.encoder:  # knob has been turned
-        if button_mode == "NumPad":
+    if last_knob_pos is not macropad.encoder:
+        if macropad_sleep:
+            deactivate_screen_saver()
+
+        elif button_mode == "NumPad":
             read_knob_value(0)
 
         elif button_mode == "MidiCtrl":
@@ -371,21 +379,23 @@ while True:
                 read_knob_value(3)
                 toggle_row()
 
-    macropad.encoder_switch_debounced.update()  # check the knob switch for press or release
+    macropad.encoder_switch_debounced.update() # check the knob switch for press or release
 
-    if macropad.encoder_switch_debounced.pressed:
-        time_of_last_action = time.monotonic()
-        macropad.red_led = macropad.encoder_switch
+    if macropad.encoder_switch_debounced.pressed and macropad_sleep:
+        deactivate_screen_saver()
 
-    if macropad.encoder_switch_debounced.released:
+    elif macropad.encoder_switch_debounced.pressed:
         if button_mode == "NumPad":
             send_encoder_click()
 
-        if button_mode == "MidiCtrl":
+        elif button_mode == "MidiCtrl":
             toggle_enocder_mode()
         macropad.red_led = macropad.encoder_switch
 
+    elif macropad.encoder_switch_debounced.released:
+        macropad.red_led = macropad.encoder_switch
+
     if clear_screen:
-        clear_numpad_screen()
+        clear_entered_characters()
     check_for_screensaver()
     macropad.display.refresh()
