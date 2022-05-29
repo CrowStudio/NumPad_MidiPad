@@ -34,6 +34,8 @@ CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
 CC_NUM2 = 1  # Modulation Wheel
 
+CC = [CC_NUM0, CC_NUM1, CC_NUM2]
+
 # create the macropad object, rotate orientation
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
@@ -149,8 +151,10 @@ def deactivate_screen_saver():
     global macropad_sleep
     global time_of_last_action
 
-    macropad_sleep = False
     time_of_last_action = time.monotonic()
+    macropad.pixels.brightness = 0.05
+    macropad_sleep = False
+    text_lines.show()
 
 
 def send_numpad_key_press():
@@ -265,7 +269,6 @@ def read_knob_value(encoder_mode):
 def send_cc_value(num):
     global text_lines
 
-    CC = [CC_NUM0, CC_NUM1, CC_NUM2]
     macropad.midi.send(macropad.ControlChange(CC[num], int(cc_values[encoder_mode]*4.1)))
     text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
 
@@ -301,10 +304,6 @@ def check_for_screensaver():
         macropad.pixels.brightness = 0
         macropad_sleep = True
         blank_display.show()
-    elif (loop_time - time_of_last_action) < SCREEN_ACTIVE:
-        macropad.pixels.brightness = 0.05
-        macropad_sleep = False
-        text_lines.show()
 
 
 last_knob_pos = macropad.encoder  # store knob position state
@@ -366,11 +365,10 @@ while True:
                 elif key_event.released:
                     send_midi_key_release()
 
-    if last_knob_pos is not macropad.encoder:
-        if macropad_sleep:
-            deactivate_screen_saver()
+    if last_knob_pos is not macropad.encoder and macropad_sleep:
+        deactivate_screen_saver()
 
-        elif button_mode == "NumPad":
+        if button_mode == "NumPad":
             read_knob_value(0)
 
         elif button_mode == "MidiCtrl":
