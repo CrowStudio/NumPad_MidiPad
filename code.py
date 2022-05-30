@@ -28,7 +28,7 @@ BKGND_COLOR = MAGENTA
 PRESSED_COLOR = CYAN
 
 SCREEN_ACTIVE = 60
-RESET_ENTERED_CHAR = 5
+RESET_ENTERED_CHAR = 3
 
 CC_NUM0 = 7  # Volume
 CC_NUM1 = 10 # Pan
@@ -85,6 +85,7 @@ encoder_keycode = [macropad.Keycode.KEYPAD_PLUS,
 
 button_configuration = ["NumPad", "MidiCtrl", "INIT"]
 button_mode = button_configuration[2]
+
 
 def configure_keypad():
     global time_of_last_action
@@ -365,10 +366,11 @@ while True:
                 elif key_event.released:
                     send_midi_key_release()
 
-    if last_knob_pos is not macropad.encoder and macropad_sleep:
-        deactivate_screen_saver()
+    if last_knob_pos is not macropad.encoder:
+        if macropad_sleep:
+            deactivate_screen_saver()
 
-        if button_mode == "NumPad":
+        elif button_mode == "NumPad":
             read_knob_value(0)
 
         elif button_mode == "MidiCtrl":
