@@ -23,8 +23,7 @@ class NumPad:
         self.key_map = ['7', '8', '9',
                         '4', '5', '6',
                         '1', '2', '3',
-                        ',', '0', 'Enter',
-                        "Encoder"]
+                        ',', '0', 'Enter']
                     
         self.keycode = [self.macropad.Keycode.KEYPAD_SEVEN,
                 self.macropad.Keycode.KEYPAD_EIGHT,
@@ -63,7 +62,7 @@ class NumPad:
         return time.monotonic()
 
     def __update_screen_characters_entered(self, key, text_lines):
-        if self.key_map[key] == "Encoder":
+        if key == "Encoder":
             if self.encoder_map[self.encoder_pos] == "<-":
                 self.characters_entered = self.characters_entered[:-1]
             elif self.encoder_map[self.encoder_pos] == "=":
@@ -88,7 +87,7 @@ class NumPad:
 
     def send_encoder_click(self, time_of_last_action, text_lines):
         time_of_last_action = time.monotonic()
-        self.__update_screen_characters_entered(12, text_lines)
+        self.__update_screen_characters_entered("Encoder", text_lines)
         if self.encoder_pos in [4, 5, 6]:
             return self.macropad.keyboard.press(self.macropad.Keycode.SHIFT, self.encoder_keycode[self.encoder_pos]), self.macropad.keyboard.release_all()
         else:
