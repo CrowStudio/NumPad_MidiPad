@@ -17,7 +17,6 @@
 # and JEP_NeoTrellis_Blackbox_Triggers - who got me started to developing this piece of code.
 
 from adafruit_macropad import MacroPad
-
 import time
 import gc
 
@@ -37,15 +36,15 @@ def configure_keypad():
     global button_mode
 
     if key_event.key_number == 0:
-        button_mode = "NumPad"
         from NumPad import NumPad
+        button_mode = "NumPad"
         keypad = NumPad(macropad)
         keypad.set_pixel_color_mode()
         text_lines = set_button_mode_text(keypad)
         return keypad
     elif key_event.key_number == 2:
-        button_mode = "MidiCtrl"
         from MidiCtrl import MidiCtrl
+        button_mode = "MidiCtrl"
         keypad = MidiCtrl(macropad)
         keypad.set_pixel_color_mode()
         keypad.key_map = keypad.key_maps[0]
