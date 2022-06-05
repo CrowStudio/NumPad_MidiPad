@@ -25,11 +25,9 @@ MAGENTA = (255, 0, 255)
 
 SCREEN_ACTIVE = 60
 
-# create the macropad object, rotate orientation
+# create the macropad object, rotation none
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
-
-button_mode = "INIT"
 
 def configure_keypad():
     global text_lines
@@ -60,7 +58,7 @@ def set_button_mode_text(keypad):
         text_lines[0].text = f"{keypad.mode_text[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
     return text_lines
 
-  
+
 def check_for_screensaver():
     if loop_time - time_of_last_action <= SCREEN_ACTIVE:
         return False
@@ -76,13 +74,12 @@ def deactivate_screen_saver():
     return loop_time
 
 
-macropad_sleep = False
-
+# --- Start-up image --- #
 macropad.display_image("img/CrowStudio_logo.bmp")
 time.sleep(3)
 
 # --- Display text setup --- #
-blank_display = macropad.display_text("")
+blank_display = macropad.display_text("") # for screen saver
 text_lines = macropad.display_text("Choose MacroPad mode:")
 text_lines[0].text = "Yellow = NumPad"
 text_lines[1].text = "Magenta = BlackBox"
@@ -94,6 +91,8 @@ macropad.pixels.brightness = 0.05
 macropad.pixels[0] = YELLOW
 macropad.pixels[2] = MAGENTA
 
+button_mode = "INIT"
+
 while button_mode == "INIT":
     if macropad.keys.events:
         time_of_last_action = time.monotonic()
@@ -102,6 +101,9 @@ while button_mode == "INIT":
 macropad.display.refresh()
 gc.collect()
 print(f"Free mem after configure_keypad(): {gc.mem_free()}")
+
+macropad_sleep = False
+loop_time = 0
 
 while True:
     loop_time = time.monotonic()
