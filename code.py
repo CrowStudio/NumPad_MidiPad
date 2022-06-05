@@ -1,4 +1,4 @@
-#                          NumPad_MidiPad
+#                             NumPad_MidiPad
 #    Copyright 2022 Daniel Arvidsson <daniel.arvidsson@crowstudio.se>
 #
 # This program is free software: you can redistribute it and/or modify it under the
@@ -18,6 +18,7 @@
 
 from adafruit_macropad import MacroPad
 from NumPad import NumPad
+from MidiCtrl import MidiCtrl
 import time
 import gc
 
@@ -42,11 +43,22 @@ def configure_keypad():
         keypad.set_pixel_color_mode()
         text_lines = set_button_mode_text(keypad)
         return keypad
+    elif key_event.key_number == 2:
+        button_mode = "MidiCtrl"
+        keypad = MidiCtrl(macropad)
+        keypad.set_pixel_color_mode()
+        keypad.key_map = keypad.key_maps[0]
+        text_lines = set_button_mode_text(keypad)
+        return keypad
 
 
 def set_button_mode_text(keypad):
-    text_lines = macropad.display_text("NumPad")
-    text_lines[0].text = f"Encoder character: {keypad.encoder_map[keypad.encoder_pos]}"
+    if button_mode == "NumPad":
+        text_lines = macropad.display_text("NumPad")
+        text_lines[0].text = f"Encoder character: {keypad.encoder_map[keypad.encoder_pos]}"
+    elif button_mode == "MidiCtrl":
+        text_lines = macropad.display_text("BlackBox MIDI")
+        #text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
     return text_lines
 
 
@@ -107,7 +119,7 @@ while True:
             if key_event.pressed:
                 time_of_last_action = keypad.send_key_press(key_event, text_lines)
             elif key_event.released:
-                keypad.reset_pixel_to_bkgnd_color(key_event)
+                keypad.key_release(key_event, text_lines)
 
     if keypad.last_knob_pos is not keypad.macropad.encoder:
         if macropad_sleep:

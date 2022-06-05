@@ -61,6 +61,12 @@ class NumPad:
         self.__update_screen_characters_entered(key, text_lines)
         return time.monotonic()
 
+
+    def key_release(self, key_event, text_lines):
+        key = key_event.key_number
+        self.__reset_pixel_to_bkgnd_color(key)
+
+
     def __update_screen_characters_entered(self, key, text_lines):
         if key == "Encoder":
             if self.encoder_map[self.encoder_pos] == "<-":
@@ -106,7 +112,5 @@ class NumPad:
         for key in range(12):
             self.macropad.pixels[key] = self.NUMPAD_KEY_COLOR[key]
 
-
-    def reset_pixel_to_bkgnd_color(self, key_event):
-        key = key_event.key_number
+    def __reset_pixel_to_bkgnd_color(self, key):
         self.macropad.pixels[key] = self.NUMPAD_KEY_COLOR[key]
