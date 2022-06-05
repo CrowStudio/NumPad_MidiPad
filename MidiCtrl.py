@@ -19,6 +19,7 @@ class MidiCtrl:
         self.macropad = macropad
 
         self.key_map = []
+        
         self.key_maps = [[48, 49, 50,
                         44, 45, 46,
                         40, 41, 42,
@@ -50,7 +51,6 @@ class MidiCtrl:
         key = key_event.key_number
         self.macropad.pixels[key] = self.PRESSED_COLOR
         self.macropad.midi.send(self.macropad.NoteOn(self.key_map[key], 120))
-        self.macropad.pixels[key] = self.PRESSED_COLOR
         text_lines[2].text = f"SampleOn:{self.key_map[key]}"
         return time.monotonic()
 
@@ -61,16 +61,57 @@ class MidiCtrl:
         self.__reset_pixel_to_bkgnd_color(key)
         text_lines[2].text = ""
 
+
+    def read_knob_value(self, text_lines):
+        if self.encoder_mode in [0, 1, 2]:
+            self.knob_pos = self.macropad.encoder
+            self.knob_delta = self.knob_pos - self.last_knob_pos
+            self.cc_values[self.encoder_mode] = min(max(self.cc_values[self.encoder_mode] + self.knob_delta, 0), 127)
+            self.__send_cc_value(self.encoder_mode)
+            text_lines[0].text = f"{self.mode_text[self.encoder_mode]} {int(self.cc_values[self.encoder_mode])}"
+        else:
+            self.row_pos = (self.macropad.encoder + self.read_diff) % 2
+            self.__toggle_row()
+            text_lines[0].text = f"{self.mode_text[self.encoder_mode]} {self.row[self.row_pos]}"
+        self.last_knob_pos = self.macropad.encoder
+        return time.monotonic()
+
+
+    def __send_cc_value(self, num):
+        self.macropad.midi.send(self.macropad.ControlChange(self.CC[num], int(self.cc_values[self.encoder_mode])))
+        
+
+    def handle_encoder_click(self, text_lines):
+        self.encoder_mode = (self.encoder_mode + 1) % 4
+        if self.encoder_mode in [0, 1, 2]:
+            text_lines[0].text = f"{self.mode_text[self.encoder_mode]} {int(self.cc_values[self.encoder_mode])}"
+        else:
+            text_lines[0].text = f"{self.mode_text[self.encoder_mode]} {self.row[self.row_pos]}"
+        return time.monotonic()
+
+
+    def __toggle_row(self):
+        if self.row[self.row_pos] == 3:
+            self.row_4 = False
+            self.key_map = self.key_maps[0]
+        else:
+            self.row_4 = True
+            self.key_map = self.key_maps[1]
+        self.set_pixel_color_mode()
+
+
     def set_pixel_color_mode(self):
         self.macropad.pixels.brightness = 0.05
         for key in range(12):
             self.__set_background_colors(key)
+
 
     def __set_background_colors(self, key):
         if key in [2, 5, 8, 11] and self.row_4 == True:
             self.macropad.pixels[key] = self.MINT
         else:
            self.macropad.pixels[key] = self.NUMPAD_KEY_COLOR
+
 
     def __reset_pixel_to_bkgnd_color(self, key):
         self.__set_background_colors(key)

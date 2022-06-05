@@ -58,7 +58,7 @@ def set_button_mode_text(keypad):
         text_lines[0].text = f"Encoder character: {keypad.encoder_map[keypad.encoder_pos]}"
     elif button_mode == "MidiCtrl":
         text_lines = macropad.display_text("BlackBox MIDI")
-        #text_lines[0].text = f"{mode_text[encoder_mode]} {row[row_pos]}"
+        text_lines[0].text = f"{keypad.mode_text[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
     return text_lines
 
 
@@ -133,7 +133,7 @@ while True:
         time_of_last_action = deactivate_screen_saver()
 
     elif keypad.macropad.encoder_switch_debounced.pressed:
-        keypad.send_encoder_click(time_of_last_action, text_lines)
+        time_of_last_action = keypad.handle_encoder_click(text_lines)
         keypad.macropad.red_led = keypad.macropad.encoder_switch
 
     elif keypad.macropad.encoder_switch_debounced.released:

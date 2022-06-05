@@ -91,13 +91,13 @@ class NumPad:
         return time.monotonic()
 
 
-    def send_encoder_click(self, time_of_last_action, text_lines):
-        time_of_last_action = time.monotonic()
+    def handle_encoder_click(self, text_lines):
         self.__update_screen_characters_entered("Encoder", text_lines)
         if self.encoder_pos in [4, 5, 6]:
-            return self.macropad.keyboard.press(self.macropad.Keycode.SHIFT, self.encoder_keycode[self.encoder_pos]), self.macropad.keyboard.release_all()
+            self.macropad.keyboard.press(self.macropad.Keycode.SHIFT, self.encoder_keycode[self.encoder_pos]), self.macropad.keyboard.release_all()
         else:
-            return self.macropad.keyboard.send(self.encoder_keycode[self.encoder_pos])
+            self.macropad.keyboard.send(self.encoder_keycode[self.encoder_pos])
+        return time.monotonic()
 
 
     def clear_entered_characters(self, time_of_last_action, text_lines):
@@ -111,6 +111,7 @@ class NumPad:
         self.macropad.pixels.brightness = 0.05
         for key in range(12):
             self.macropad.pixels[key] = self.NUMPAD_KEY_COLOR[key]
+
 
     def __reset_pixel_to_bkgnd_color(self, key):
         self.macropad.pixels[key] = self.NUMPAD_KEY_COLOR[key]
