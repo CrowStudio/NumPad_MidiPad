@@ -60,7 +60,7 @@ def set_button_mode_text(keypad):
         text_lines[0].text = f"{keypad.mode_text[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
     return text_lines
 
-
+  
 def check_for_screensaver():
     if loop_time - time_of_last_action <= SCREEN_ACTIVE:
         return False
