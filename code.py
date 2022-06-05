@@ -41,7 +41,6 @@ def configure_keypad():
         keypad = NumPad(macropad)
         keypad.set_pixel_color_mode()
         text_lines = set_button_mode_text(keypad)
-        return keypad
     elif key_event.key_number == 2:
         from MidiCtrl import MidiCtrl
         button_mode = "MidiCtrl"
@@ -49,7 +48,7 @@ def configure_keypad():
         keypad.set_pixel_color_mode()
         keypad.key_map = keypad.key_maps[0]
         text_lines = set_button_mode_text(keypad)
-        return keypad
+    return keypad
 
 
 def set_button_mode_text(keypad):
@@ -88,13 +87,12 @@ text_lines = macropad.display_text("Choose MacroPad mode:")
 text_lines[0].text = "Yellow = NumPad"
 text_lines[1].text = "Magenta = BlackBox"
 text_lines.show()
+macropad.display.refresh()
 
 # --- Pixel setup --- #
 macropad.pixels.brightness = 0.05
 macropad.pixels[0] = YELLOW
 macropad.pixels[2] = MAGENTA
-
-macropad.display.refresh()
 
 while button_mode == "INIT":
     if macropad.keys.events:
@@ -121,7 +119,7 @@ while True:
             elif key_event.released:
                 keypad.key_release(key_event, text_lines)
 
-    if keypad.last_knob_pos is not keypad.macropad.encoder:
+    if keypad.last_knob_pos is not keypad.macropad.encoder:  # check for encoder movement
         if macropad_sleep:
             time_of_last_action = deactivate_screen_saver()
         else:
