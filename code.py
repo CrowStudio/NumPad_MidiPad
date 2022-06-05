@@ -262,16 +262,16 @@ def read_knob_value(encoder_mode):
         else:
             knob_pos = macropad.encoder
             knob_delta = knob_pos - last_knob_pos
-            last_knob_pos = knob_pos
-            cc_values[encoder_mode] = min(max(cc_values[encoder_mode] + knob_delta, 0), 31)  # scale the value
+            cc_values[encoder_mode] = min( max(cc_values[encoder_mode] + knob_delta, 0), 127)  
     last_knob_pos = macropad.encoder
 
 
 def send_cc_value(num):
     global text_lines
 
-    macropad.midi.send(macropad.ControlChange(CC[num], int(cc_values[encoder_mode]*4.1)))
-    text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode]*4.1)}"
+    macropad.midi.send(macropad.ControlChange(CC[num], int(cc_values[encoder_mode])))
+    text_lines[0].text = f"{mode_text[encoder_mode]} {int(cc_values[encoder_mode])}"
+
 
 
 def toggle_row():
