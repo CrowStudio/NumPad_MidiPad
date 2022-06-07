@@ -62,20 +62,18 @@ def set_button_mode_text(keypad):
 
 
 def check_for_screensaver():
-    if loop_time - time_of_last_action > SCREEN_ACTIVE:
-        keypad.macropad.pixels.brightness = 0
-        blank_display.show()
-        return True
+    if loop_time - time_of_last_action <= SCREEN_ACTIVE:
+        return False
+    keypad.macropad.pixels.brightness = 0
+    blank_display.show()
+    return True
 
 
 def deactivate_screensaver():
-    global time_of_last_action
-
-    time_of_last_action = loop_time
     keypad.macropad.pixels.brightness = 0.05
     keypad.last_knob_pos = keypad.macropad.encoder
     text_lines.show()
-    return False
+    return loop_time
 
 
 # --- Start-up image --- #
@@ -117,26 +115,23 @@ while True:
     if keypad.macropad.keys.events:  # check for key press or release
         key_event = keypad.macropad.keys.events.get()
 
-        if key_event.pressed and keypad.macropad_sleep:
-            keypad.macropad_sleep = deactivate_screensaver()
-
-
-        elif key_event:
-            if key_event.pressed:
-                time_of_last_action = keypad.send_key_press(key_event, text_lines)
-            elif key_event.released:
-                keypad.key_release(key_event, text_lines)
+        if key_event.pressed and not keypad.macropad_sleep:
+            time_of_last_action = keypad.send_key_press(key_event, text_lines)
+        elif key_event.released and not keypad.macropad_sleep:
+            time_of_last_action = keypad.key_release(key_event, text_lines)
+        elif key_event.released:
+            time_of_last_action = deactivate_screensaver()
 
     if keypad.last_knob_pos is not keypad.macropad.encoder:  # check for encoder movement
         if keypad.macropad_sleep:
-            keypad.macropad_sleep = deactivate_screensaver()
+            time_of_last_action = deactivate_screensaver()
         else:
             time_of_last_action = keypad.read_knob_value(text_lines)
 
     keypad.macropad.encoder_switch_debounced.update() # check the knob switch for press or release
 
     if keypad.macropad.encoder_switch_debounced.pressed and keypad.macropad_sleep:
-        keypad.macropad_sleep = deactivate_screensaver()
+        time_of_last_action = deactivate_screensaver()
 
     elif keypad.macropad.encoder_switch_debounced.pressed:
         time_of_last_action = keypad.handle_encoder_click(text_lines)

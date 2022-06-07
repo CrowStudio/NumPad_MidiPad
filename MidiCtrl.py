@@ -85,6 +85,7 @@ class MidiCtrl:
         self.macropad.midi.send(self.macropad.NoteOff(self.key_map[key], 0))
         self.__reset_pixel_to_bkgnd_color(key)
         text_lines[2].text = ""
+        return time.monotonic()
 
 
     def read_knob_value(self, text_lines):
