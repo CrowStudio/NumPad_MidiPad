@@ -1,6 +1,12 @@
 from adafruit_macropad import MacroPad
 import time
 
+class Sample:
+    TOGGLE = "Toggle"
+    MOM = "Gate/Trig"
+    OFF = "OFF"
+    ON = "ON"
+
 class MidiCtrl:
     def __init__(self, macropad):
         self.CYAN = (0, 255, 255)
@@ -11,7 +17,7 @@ class MidiCtrl:
         self.PRESSED_COLOR = self.CYAN
 
         self.CC_NUM0 = 7  # Volume
-        self.CC_NUM1 = 10  # Pan
+        self.CC_NUM1 = 10 # Pan
         self.CC_NUM2 = 1  # Modulation Wheel
 
         self.CC = [self.CC_NUM0, self.CC_NUM1, self.CC_NUM2]
@@ -30,20 +36,20 @@ class MidiCtrl:
                           40, 41, 43,
                           36, 37, 39]]
 
-        self.latch_map = {0: ["Toggle", "OFF"], 1: ["Gate/Trig", "OFF"], 2: ["Gate/Trig", "OFF"],
-                          3: ["Gate/Trig", "OFF"], 4: ["Gate/Trig", "OFF"], 5: ["Gate/Trig", "OFF"],
-                          6: ["Gate/Trig", "OFF"], 7: ["Gate/Trig", "OFF"], 8: ["Gate/Trig", "OFF"],
-                          9: ["Gate/Trig", "OFF"], 10: ["Gate/Trig", "OFF"], 11: ["Gate/Trig", "OFF"]}
+        self.latch_map = {0: [Sample.TOGGLE, Sample.OFF], 1: [Sample.MOM, Sample.OFF], 2: [Sample.MOM, Sample.OFF],
+                          3: [Sample.MOM, Sample.OFF], 4: [Sample.MOM, Sample.OFF], 5: [Sample.MOM, Sample.OFF],
+                          6: [Sample.MOM, Sample.OFF], 7: [Sample.MOM, Sample.OFF], 8: [Sample.MOM, Sample.OFF],
+                          9: [Sample.MOM, Sample.OFF], 10: [Sample.MOM, Sample.OFF], 11: [Sample.MOM, Sample.OFF]}
 
-        self.latch_row_3 = {2: ["Gate/Trig", "OFF"],
-                            5: ["Gate/Trig", "OFF"],
-                            8: ["Gate/Trig", "OFF"],
-                            11: ["Gate/Trig", "OFF"]}
+        self.latch_row_3 = {2: [Sample.MOM, Sample.OFF],
+                            5: [Sample.MOM, Sample.OFF],
+                            8: [Sample.MOM, Sample.OFF],
+                            11: [Sample.MOM, Sample.OFF]}
 
-        self.latch_row_4 = {2: ["Toggle", "OFF"],
-                            5: ["Gate/Trig", "OFF"],
-                            8: ["Gate/Trig", "OFF"],
-                            11: ["Gate/Trig", "OFF"]}
+        self.latch_row_4 = {2: [Sample.TOGGLE, Sample.OFF],
+                            5: [Sample.MOM, Sample.OFF],
+                            8: [Sample.MOM, Sample.OFF],
+                            11: [Sample.MOM, Sample.OFF]}
 
         self.row = [3, 4]
 
@@ -135,6 +141,7 @@ class MidiCtrl:
                     self.latch_map[key] = self.latch_row_3[key]
 
 
+
     def set_pixel_color_mode(self):
         self.macropad.pixels.brightness = 0.05
         for key in range(12):
@@ -154,15 +161,14 @@ class MidiCtrl:
 
     def __check_toggle_state(self, key, COLOR):
         if self.init_row == True:
-            if self.latch_map[key][0] == "Toggle" and self.latch_map[key][1] == "ON":
+            if self.latch_map[key][0] == Sample.TOGGLE and self.latch_map[key][1] == Sample.ON:
                 self.macropad.pixels[key] = self.PRESSED_COLOR
             else:
                 self.macropad.pixels[key] = COLOR
-
-        elif self.latch_map[key][0] == "Toggle" and self.latch_map[key][1] == "OFF":
-            self.latch_map[key][1] = "ON"
-        elif self.latch_map[key][1] == "ON":
-            self.latch_map[key][1] = "OFF"
+        elif self.latch_map[key][0] == Sample.TOGGLE and self.latch_map[key][1] == Sample.OFF:
+            self.latch_map[key][1] = Sample.ON
+        elif self.latch_map[key][1] == Sample.ON:
+            self.latch_map[key][1] = Sample.OFF
             self.macropad.pixels[key] = COLOR
         else:
             self.macropad.pixels[key] = COLOR

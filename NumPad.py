@@ -94,7 +94,7 @@ class NumPad:
     def handle_encoder_click(self, text_lines):
         self.__update_screen_characters_entered("Encoder", text_lines)
         if self.encoder_pos in [4, 5, 6]:
-            self.macropad.keyboard.press(self.macropad.Keycode.SHIFT, 
+            self.macropad.keyboard.press(self.macropad.Keycode.SHIFT,
                 self.encoder_keycode[self.encoder_pos]), self.macropad.keyboard.release_all()
         else:
             self.macropad.keyboard.send(self.encoder_keycode[self.encoder_pos])
