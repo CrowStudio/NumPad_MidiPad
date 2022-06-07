@@ -62,6 +62,7 @@ class MidiCtrl:
 
         self.knob_pos = 0
         self.knob_delta = 0
+        self.read_diff = 0
         self.encoder_mode = 3
         self.encoder_pos = 0
         self.row_pos = 0
@@ -90,14 +91,14 @@ class MidiCtrl:
 
     def read_knob_value(self, text_lines):
         if self.encoder_mode in [0, 1, 2]:
-            self.knob_pos = self.macropad.encoder
-            self.knob_delta = self.knob_pos - self.last_knob_pos
+            self.knob_delta = self.macropad.encoder - self.last_knob_pos
             self.cc_values[self.encoder_mode] = min(
                 max(self.cc_values[self.encoder_mode] + self.knob_delta, 0), 127)
             self.__send_cc_value(self.encoder_mode)
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {int(self.cc_values[self.encoder_mode])}"
         else:
-            self.row_pos = self.macropad.encoder % 2
+            self.read_diff = self.row_pos - self.last_knob_pos
+            self.row_pos = (self.macropad.encoder + self.read_diff) % 2
             self.__toggle_row()
             self.init_row = False
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {self.row[self.row_pos]}"

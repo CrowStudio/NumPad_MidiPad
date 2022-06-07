@@ -50,6 +50,7 @@ class NumPad:
 
     def __init__(self, macropad):
         self.macropad = macropad
+        self.macropad_sleep = False
 
         self.KEYCODE = [self.macropad.Keycode.KEYPAD_SEVEN,
                         self.macropad.Keycode.KEYPAD_EIGHT,
@@ -76,6 +77,7 @@ class NumPad:
                                 self.macropad.Keycode.KEYPAD_EQUALS]
 
         self.last_knob_pos = self.macropad.encoder
+        self.knob_delta = 0
         self.encoder_pos = 0
         self.clear_screen = False
         self.characters_entered = ""
@@ -91,6 +93,7 @@ class NumPad:
     def key_release(self, key_event, text_lines):
         key = key_event.key_number
         self.__reset_pixel_to_bkgnd_color(key)
+        return time.monotonic()
 
 
     def __update_screen_characters_entered(self, key, text_lines):
@@ -111,7 +114,8 @@ class NumPad:
 
 
     def read_knob_value(self, text_lines):
-        self.encoder_pos = self.macropad.encoder % 10
+        self.knob_delta = self.encoder_pos - self.last_knob_pos
+        self.encoder_pos = (self.macropad.encoder + self.knob_delta) % 10
         text_lines[0].text = f"Encoder character: {NumPad.ENCODER_MAP[self.encoder_pos]}"
         self.last_knob_pos = self.macropad.encoder
         return time.monotonic()
