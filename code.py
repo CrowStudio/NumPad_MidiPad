@@ -104,8 +104,7 @@ macropad.display.refresh()
 gc.collect()
 print(f"Free mem after configure_keypad(): {gc.mem_free()}")
 
-loop_time = 0
-time_of_last_action = time.monotonic()
+time_of_last_action = loop_time = time.monotonic()
 
 while True:
     loop_time = time.monotonic()
