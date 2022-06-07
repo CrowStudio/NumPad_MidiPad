@@ -28,7 +28,6 @@ SCREEN_ACTIVE = 60
 # create the macropad object, rotation none
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
-keypad = object()
 
 def configure_keypad():
     global text_lines
