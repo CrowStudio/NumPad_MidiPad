@@ -28,6 +28,7 @@ SCREEN_ACTIVE = 60
 # create the macropad object, rotation none
 macropad = MacroPad(rotation=0)
 macropad.display.auto_refresh = False  # avoid lag
+keypad = object()
 
 def configure_keypad():
     global text_lines
@@ -53,26 +54,28 @@ def configure_keypad():
 def set_button_mode_text(keypad):
     if button_mode == "NumPad":
         text_lines = macropad.display_text("NumPad")
-        text_lines[0].text = f"Encoder character: {keypad.encoder_map[keypad.encoder_pos]}"
+        text_lines[0].text = f"Encoder character: {keypad.ENCODER_MAP[keypad.encoder_pos]}"
     elif button_mode == "MidiCtrl":
         text_lines = macropad.display_text("BlackBox MIDI")
-        text_lines[0].text = f"{keypad.mode_text[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
+        text_lines[0].text = f"{keypad.MODE_TEXT[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
     return text_lines
 
 
 def check_for_screensaver():
-    if loop_time - time_of_last_action <= SCREEN_ACTIVE:
-        return False
-    keypad.macropad.pixels.brightness = 0
-    blank_display.show()
-    return True
+    if loop_time - time_of_last_action > SCREEN_ACTIVE:
+        keypad.macropad.pixels.brightness = 0
+        blank_display.show()
+        return True
 
 
-def deactivate_screen_saver():
+def deactivate_screensaver():
+    global time_of_last_action
+
+    time_of_last_action = loop_time
     keypad.macropad.pixels.brightness = 0.05
     keypad.last_knob_pos = keypad.macropad.encoder
     text_lines.show()
-    return loop_time
+    return False
 
 
 # --- Start-up image --- #
@@ -96,15 +99,16 @@ button_mode = "INIT"
 
 while button_mode == "INIT":
     if macropad.keys.events:
-        time_of_last_action = time.monotonic()
         key_event = macropad.keys.events.get()
         keypad = configure_keypad()
+
 macropad.display.refresh()
 
 gc.collect()
 print(f"Free mem after configure_keypad(): {gc.mem_free()}")
 
 loop_time = 0
+time_of_last_action = time.monotonic()
 
 while True:
     loop_time = time.monotonic()
@@ -114,7 +118,8 @@ while True:
         key_event = keypad.macropad.keys.events.get()
 
         if key_event.pressed and keypad.macropad_sleep:
-            time_of_last_action = deactivate_screen_saver()
+            keypad.macropad_sleep = deactivate_screensaver()
+
 
         elif key_event:
             if key_event.pressed:
@@ -124,14 +129,14 @@ while True:
 
     if keypad.last_knob_pos is not keypad.macropad.encoder:  # check for encoder movement
         if keypad.macropad_sleep:
-            time_of_last_action = deactivate_screen_saver()
+            keypad.macropad_sleep = deactivate_screensaver()
         else:
             time_of_last_action = keypad.read_knob_value(text_lines)
 
     keypad.macropad.encoder_switch_debounced.update() # check the knob switch for press or release
 
     if keypad.macropad.encoder_switch_debounced.pressed and keypad.macropad_sleep:
-        time_of_last_action = deactivate_screen_saver()
+        keypad.macropad_sleep = deactivate_screensaver()
 
     elif keypad.macropad.encoder_switch_debounced.pressed:
         time_of_last_action = keypad.handle_encoder_click(text_lines)
@@ -142,5 +147,5 @@ while True:
 
     if keypad.clear_screen:
         keypad.clear_entered_characters(time_of_last_action, text_lines)
-    keypad.macropad_sleep  = check_for_screensaver()
+    keypad.macropad_sleep = check_for_screensaver()
     macropad.display.refresh()
