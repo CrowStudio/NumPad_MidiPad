@@ -82,7 +82,7 @@ class NumPad:
 
     def send_key_press(self, key_event, text_lines):
         key = key_event.key_number
-        self.macropad.pixels[key] = self.PRESSED_COLOR
+        self.macropad.pixels[key] = NumPad.PRESSED_COLOR
         self.macropad.keyboard.send(self.KEYCODE[key])
         self.__update_screen_characters_entered(key, text_lines)
         return time.monotonic()
