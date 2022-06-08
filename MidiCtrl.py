@@ -110,7 +110,10 @@ class MidiCtrl:
             self.__send_cc_value(self.encoder_mode)
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {int(self.cc_values[self.encoder_mode])}"
         elif self.encoder_mode == 3:
-            text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]}"
+            self.__toggle_row()
+            self.__show_toggle_pixel_status()
+            text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} -"
+            text_lines[1].text = f"Row: 1      2      {self.row[self.row_pos]}"
         else:
             self.__toggle_row()
             self.set_pixel_color_mode()
@@ -127,11 +130,13 @@ class MidiCtrl:
         elif self.encoder_mode == 3:
             self.latch_config = True
             self.__show_toggle_pixel_status()
-            text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]}"
+            text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} -"
+            text_lines[1].text = f"Row: 1      2      {self.row[self.row_pos]}"
         else:
             self.latch_config = False
             self.__restore_pixel_status()
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {self.row[self.row_pos]}"
+            text_lines[1].text = ""
         return time.monotonic()
 
 
