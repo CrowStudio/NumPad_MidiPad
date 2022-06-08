@@ -14,7 +14,7 @@
 # program. If not, see <https://www.gnu.org/licenses/>.
 #
 # Credits to John Park, Adafruit Industries 2022 - for Macropad MIDI Tester
-# and JEP_NeoTrellis_Blackbox_Triggers - who got me started to developing this piece of code.
+# and JEP_NeoTrellis_Blackbox_Triggers - who got me inspired to start this project.
 
 from adafruit_macropad import MacroPad
 import time
