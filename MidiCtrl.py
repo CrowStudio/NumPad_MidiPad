@@ -96,8 +96,7 @@ class MidiCtrl:
     def key_release(self, key_event, text_lines):
         key = key_event.key_number
         if self.latch_config:
-            self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
+            self.__set_toggle_pixel_status(key)
         else:
             self.macropad.midi.send(self.macropad.NoteOff(self.key_map[key], 0))
             self.__reset_pixel_to_bkgnd_color(key)
@@ -207,14 +206,19 @@ class MidiCtrl:
     def __config_toggle_mode(self, key):
         self.latch_map[key][0] = Sample.TOGGLE if self.latch_map[key][0] == Sample.MOM else Sample.MOM
 
+
     def __show_toggle_pixel_status(self):
         for key in range(12):
-            if key in [2, 5, 8, 11] and self.row_4 == True:
-                self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                    key][0] == Sample.TOGGLE else MidiCtrl.MINT
-            else:
-                self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                    key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
+            self.__set_toggle_pixel_status(key)
+
+
+    def __set_toggle_pixel_status(self, key):
+        if key in [2, 5, 8, 11] and self.row_4 == True:
+            self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
+                key][0] == Sample.TOGGLE else MidiCtrl.MINT
+        else:
+            self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
+                key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
 
 
     def __restore_pixel_status(self):
