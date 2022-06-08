@@ -23,7 +23,7 @@ import gc
 YELLOW = (230, 100, 0)
 MAGENTA = (255, 0, 255)
 
-SCREEN_ACTIVE = 60
+SCREEN_ACTIVE = 10
 
 # create the macropad object, rotation none
 macropad = MacroPad(rotation=0)
@@ -110,9 +110,8 @@ while True:
     loop_time = time.monotonic()
     text_lines.show()
 
-    if keypad.macropad.keys.events:  # check for key press or release
+    if keypad.macropad.keys.events: # check for key press or release
         key_event = keypad.macropad.keys.events.get()
-
         if key_event.pressed and not keypad.macropad_sleep:
             time_of_last_action = keypad.send_key_press(key_event, text_lines)
         elif key_event.released and not keypad.macropad_sleep:
@@ -120,7 +119,7 @@ while True:
         elif key_event.released:
             time_of_last_action = deactivate_screensaver()
 
-    if keypad.last_knob_pos is not keypad.macropad.encoder:  # check for encoder movement
+    if keypad.last_knob_pos is not keypad.macropad.encoder: # check for encoder movement
         if keypad.macropad_sleep:
             time_of_last_action = deactivate_screensaver()
         else:
@@ -138,7 +137,7 @@ while True:
     elif keypad.macropad.encoder_switch_debounced.released:
         keypad.macropad.red_led = keypad.macropad.encoder_switch
 
-    if keypad.clear_screen:
+    if keypad.clear_screen: # only used for NumPad
         keypad.clear_entered_characters(time_of_last_action, text_lines)
     keypad.macropad_sleep = check_for_screensaver()
     macropad.display.refresh()
