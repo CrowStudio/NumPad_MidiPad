@@ -23,7 +23,7 @@ import gc
 YELLOW = (230, 100, 0)
 MAGENTA = (255, 0, 255)
 
-SCREEN_ACTIVE = 10
+SCREEN_ACTIVE = 60
 
 # create the macropad object, rotation none
 macropad = MacroPad(rotation=0)

@@ -7,22 +7,28 @@ class Sample:
     OFF = "OFF"
     ON = "ON"
 
+class CC:
+    MIN = 0
+    MAX = 127
+
+    NUM_0 = 7  # Volume
+    NUM_1 = 10 # Pan
+    NUM_2 = 1  # Modulation Wheel
+
+    NUM = [NUM_0, NUM_1, NUM_2]
+
 class MidiCtrl:
     CYAN = (0, 255, 255)
     MAGENTA = (255, 0, 255)
     MINT = (0, 255, 50)
 
-    NUMPAD_KEY_COLOR = MAGENTA
+    KEY_COLOR = MAGENTA
     PRESSED_COLOR = CYAN
 
-    CC_NUM0 = 7  # Volume
-    CC_NUM1 = 10 # Pan
-    CC_NUM2 = 1  # Modulation Wheel
+    VELOCITY = 120
 
-    CC = [CC_NUM0, CC_NUM1, CC_NUM2]
-
-    MODE_TEXT = [f"CC # {CC_NUM0}:", f"CC #{CC_NUM1}:",
-                 f"CC # {CC_NUM2}:", "Set Toggle mode",
+    MODE_TEXT = [f"CC # {CC.NUM_0}:", f"CC #{CC.NUM_1}:",
+                 f"CC # {CC.NUM_2}:", "Set Toggle mode",
                  "Active row:"]
 
     def __init__(self, macropad):
@@ -82,7 +88,7 @@ class MidiCtrl:
             self.__config_toggle_mode(key)
         else:
             self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR
-            self.macropad.midi.send(self.macropad.NoteOn(self.key_map[key], 120))
+            self.macropad.midi.send(self.macropad.NoteOn(self.key_map[key], self.VELOCITY))
             text_lines[2].text = f"SampleOn:{self.key_map[key]}"
         return time.monotonic()
 
@@ -91,7 +97,7 @@ class MidiCtrl:
         key = key_event.key_number
         if self.latch_config:
             self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                key][0] == Sample.TOGGLE else MidiCtrl.NUMPAD_KEY_COLOR
+                key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
         else:
             self.macropad.midi.send(self.macropad.NoteOff(self.key_map[key], 0))
             self.__reset_pixel_to_bkgnd_color(key)
@@ -139,12 +145,12 @@ class MidiCtrl:
     def __read_cc_value(self):
         self.knob_delta = self.macropad.encoder - self.last_knob_pos
         self.cc_values[self.encoder_mode] = min(
-            max(self.cc_values[self.encoder_mode] + self.knob_delta, 0), 127)
+            max(self.cc_values[self.encoder_mode] + self.knob_delta, CC.MIN), CC.MAX)
 
 
-    def __send_cc_value(self, num):
+    def __send_cc_value(self, x):
         self.macropad.midi.send(self.macropad.ControlChange(
-            MidiCtrl.CC[num], int(self.cc_values[self.encoder_mode])))
+            CC.NUM[x], int(self.cc_values[self.encoder_mode])))
 
 
     def __toggle_row(self):
@@ -176,7 +182,7 @@ class MidiCtrl:
         if key in [2, 5, 8, 11] and self.row_4 == True:
             self.__check_toggle_state(key, MidiCtrl.MINT)
         else:
-           self.__check_toggle_state(key, MidiCtrl.NUMPAD_KEY_COLOR)
+           self.__check_toggle_state(key, MidiCtrl.KEY_COLOR)
 
 
     def __reset_pixel_to_bkgnd_color(self, key):
@@ -208,7 +214,7 @@ class MidiCtrl:
                     key][0] == Sample.TOGGLE else MidiCtrl.MINT
             else:
                 self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                    key][0] == Sample.TOGGLE else MidiCtrl.NUMPAD_KEY_COLOR
+                    key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
 
 
     def __restore_pixel_status(self):
