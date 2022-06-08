@@ -146,6 +146,23 @@ class MidiCtrl:
             self.__set_background_colors(key)
 
 
+    def __set_background_colors(self, key):
+        if key in [2, 5, 8, 11] and self.row_4 == True:
+            self.__check_toggle_state(key, MidiCtrl.MINT)
+        else:
+           self.__check_toggle_state(key, MidiCtrl.KEY_COLOR)
+
+
+    def __reset_pixel_to_bkgnd_color(self, key):
+        self.__set_background_colors(key)
+
+
+    def __restore_pixel_status(self):
+        self.init_row = True
+        self.set_pixel_color_mode()
+        self.init_row = False
+
+
     def __read_cc_value(self):
         self.knob_delta = self.macropad.encoder - self.last_knob_pos
         self.cc_values[self.encoder_mode] = min(
@@ -182,17 +199,6 @@ class MidiCtrl:
                     self.latch_map[key] = self.latch_row_3[key]
 
 
-    def __set_background_colors(self, key):
-        if key in [2, 5, 8, 11] and self.row_4 == True:
-            self.__check_toggle_state(key, MidiCtrl.MINT)
-        else:
-           self.__check_toggle_state(key, MidiCtrl.KEY_COLOR)
-
-
-    def __reset_pixel_to_bkgnd_color(self, key):
-        self.__set_background_colors(key)
-
-
     def __check_toggle_state(self, key, COLOR):
         if self.init_row == True:
             if self.latch_map[key][0] == Sample.TOGGLE and self.latch_map[key][1] == Sample.ON:
@@ -224,9 +230,3 @@ class MidiCtrl:
         else:
             self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
                 key][0] == Sample.TOGGLE else MidiCtrl.KEY_COLOR
-
-
-    def __restore_pixel_status(self):
-        self.init_row = True
-        self.set_pixel_color_mode()
-        self.init_row = False
