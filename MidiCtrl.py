@@ -15,7 +15,7 @@ class CC:
     NUM_1 = 10 # Pan
     NUM_2 = 1  # Modulation Wheel
 
-    NUM = [NUM_0, NUM_1, NUM_2]
+    NUM_LIST = [NUM_0, NUM_1, NUM_2]
 
 class MidiCtrl:
     CYAN = (0, 255, 255)
@@ -150,7 +150,7 @@ class MidiCtrl:
 
     def __send_cc_value(self, x):
         self.macropad.midi.send(self.macropad.ControlChange(
-            CC.NUM[x], int(self.cc_values[self.encoder_mode])))
+            CC.NUM_LIST[x], int(self.cc_values[self.encoder_mode])))
 
 
     def __toggle_row(self):
