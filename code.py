@@ -110,7 +110,7 @@ while True:
     loop_time = time.monotonic()
     text_lines.show()
 
-    if keypad.macropad.keys.events: # check for key press or release
+    if keypad.macropad.keys.events:  # check for key press or release
         key_event = keypad.macropad.keys.events.get()
         if key_event.pressed and not keypad.macropad_sleep:
             time_of_last_action = keypad.send_key_press(key_event, text_lines)
@@ -119,7 +119,7 @@ while True:
         elif key_event.released:
             time_of_last_action = deactivate_screensaver()
 
-    if keypad.last_knob_pos is not keypad.macropad.encoder: # check for encoder movement
+    if keypad.last_knob_pos is not keypad.macropad.encoder:
         if keypad.macropad_sleep:
             time_of_last_action = deactivate_screensaver()
         else:

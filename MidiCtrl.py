@@ -101,26 +101,18 @@ class MidiCtrl:
 
     def read_knob_value(self, text_lines):
         if self.encoder_mode in [0, 1, 2]:
-            self.knob_delta = self.macropad.encoder - self.last_knob_pos
-            self.cc_values[self.encoder_mode] = min(
-                max(self.cc_values[self.encoder_mode] + self.knob_delta, 0), 127)
+            self.__read_cc_value()
             self.__send_cc_value(self.encoder_mode)
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {int(self.cc_values[self.encoder_mode])}"
         elif self.encoder_mode == 3:
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]}"
         else:
-            self.row_delta = self.row_pos - self.last_knob_pos
-            self.row_pos = (self.macropad.encoder + self.row_delta) % 2
             self.__toggle_row()
+            self.set_pixel_color_mode()
             self.init_row = False
             text_lines[0].text = f"{MidiCtrl.MODE_TEXT[self.encoder_mode]} {self.row[self.row_pos]}"
         self.last_knob_pos = self.macropad.encoder
         return time.monotonic()
-
-
-    def __send_cc_value(self, num):
-        self.macropad.midi.send(self.macropad.ControlChange(
-            MidiCtrl.CC[num], int(self.cc_values[self.encoder_mode])))
 
 
     def handle_encoder_click(self, text_lines):
@@ -138,7 +130,26 @@ class MidiCtrl:
         return time.monotonic()
 
 
+    def set_pixel_color_mode(self):
+        self.macropad.pixels.brightness = 0.05
+        for key in range(12):
+            self.__set_background_colors(key)
+
+
+    def __read_cc_value(self):
+        self.knob_delta = self.macropad.encoder - self.last_knob_pos
+        self.cc_values[self.encoder_mode] = min(
+            max(self.cc_values[self.encoder_mode] + self.knob_delta, 0), 127)
+
+
+    def __send_cc_value(self, num):
+        self.macropad.midi.send(self.macropad.ControlChange(
+            MidiCtrl.CC[num], int(self.cc_values[self.encoder_mode])))
+
+
     def __toggle_row(self):
+        self.row_delta = self.row_pos - self.last_knob_pos
+        self.row_pos = (self.macropad.encoder + self.row_delta) % 2
         if self.row[self.row_pos] == 3:
             self.row_4 = False
             self.key_map = self.key_maps[0]
@@ -147,7 +158,6 @@ class MidiCtrl:
             self.key_map = self.key_maps[1]
         self.init_row = True
         self.__toggle_latch_row()
-        self.set_pixel_color_mode()
 
 
     def __toggle_latch_row(self):
@@ -160,12 +170,6 @@ class MidiCtrl:
                 elif self.row_4 == False:
                     self.latch_row_4[key] = self.latch_map[key]
                     self.latch_map[key] = self.latch_row_3[key]
-
-
-    def set_pixel_color_mode(self):
-        self.macropad.pixels.brightness = 0.05
-        for key in range(12):
-            self.__set_background_colors(key)
 
 
     def __set_background_colors(self, key):
@@ -197,11 +201,14 @@ class MidiCtrl:
     def __config_toggle_mode(self, key):
         self.latch_map[key][0] = Sample.TOGGLE if self.latch_map[key][0] == Sample.MOM else Sample.MOM
 
-
     def __show_toggle_pixel_status(self):
         for key in range(12):
-            self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
-                key][0] == Sample.TOGGLE else MidiCtrl.NUMPAD_KEY_COLOR
+            if key in [2, 5, 8, 11] and self.row_4 == True:
+                self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
+                    key][0] == Sample.TOGGLE else MidiCtrl.MINT
+            else:
+                self.macropad.pixels[key] = MidiCtrl.PRESSED_COLOR if self.latch_map[
+                    key][0] == Sample.TOGGLE else MidiCtrl.NUMPAD_KEY_COLOR
 
 
     def __restore_pixel_status(self):

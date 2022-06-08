@@ -96,23 +96,6 @@ class NumPad:
         return time.monotonic()
 
 
-    def __update_screen_characters_entered(self, key, text_lines):
-        if key == "Encoder":
-            if NumPad.ENCODER_MAP[self.encoder_pos] == '<-':
-                self.characters_entered = self.characters_entered[:-1]
-            elif NumPad.ENCODER_MAP[self.encoder_pos] == '=':
-                self.clear_screen = True
-                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
-            else:
-                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
-        elif NumPad.KEY_MAP[key] == "Enter":
-            self.clear_screen = True
-        else:
-            self.clear_screen = False
-            self.characters_entered = f"{self.characters_entered}{NumPad.KEY_MAP[key]}"
-        text_lines[1].text = f"{self.characters_entered}"
-
-
     def read_knob_value(self, text_lines):
         self.knob_delta = self.encoder_pos - self.last_knob_pos
         self.encoder_pos = (self.macropad.encoder + self.knob_delta) % 10
@@ -131,6 +114,12 @@ class NumPad:
         return time.monotonic()
 
 
+    def set_pixel_color_mode(self):
+        self.macropad.pixels.brightness = 0.05
+        for key in range(12):
+            self.macropad.pixels[key] = NumPad.KEY_COLOR[key]
+
+
     def clear_entered_characters(self, time_of_last_action, text_lines):
         self.characters_entered = ""
         if (time.monotonic() - time_of_last_action) > NumPad.RESET_ENTERED_CHAR:
@@ -138,10 +127,21 @@ class NumPad:
             self.clear_screen = False
 
 
-    def set_pixel_color_mode(self):
-        self.macropad.pixels.brightness = 0.05
-        for key in range(12):
-            self.macropad.pixels[key] = NumPad.KEY_COLOR[key]
+    def __update_screen_characters_entered(self, key, text_lines):
+        if key == "Encoder":
+            if NumPad.ENCODER_MAP[self.encoder_pos] == '<-':
+                self.characters_entered = self.characters_entered[:-1]
+            elif NumPad.ENCODER_MAP[self.encoder_pos] == '=':
+                self.clear_screen = True
+                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
+            else:
+                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
+        elif NumPad.KEY_MAP[key] == "Enter":
+            self.clear_screen = True
+        else:
+            self.clear_screen = False
+            self.characters_entered = f"{self.characters_entered}{NumPad.KEY_MAP[key]}"
+        text_lines[1].text = f"{self.characters_entered}"
 
 
     def __reset_pixel_to_bkgnd_color(self, key):
