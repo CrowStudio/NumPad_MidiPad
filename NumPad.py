@@ -16,24 +16,7 @@ class NumPad:
 
     RESET_ENTERED_CHAR = 3
 
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
-    SIX = 6
-    SEVEN = 7
-    EIGHT = 8
-    NINE = 9
     COMMA = ','
-    ENTER = "Enter"
-
-    KEY_MAP = [SEVEN, EIGHT, NINE,
-               FOUR,  FIVE,  SIX,
-               ONE,   TWO,   THREE,
-               COMMA, ZERO,  ENTER]
-
     PLUS = '+'
     MINUS = '-'
     TIMES = '*'
@@ -45,14 +28,45 @@ class NumPad:
     PERIOD = '.'
     EQUALS = '='
 
-    ENCODER_MAP = [PLUS, MINUS, TIMES, DIVIDE, LEFT_PARENTHESIS,
+    ENCODER_MAP = [COMMA, PLUS, MINUS, TIMES, DIVIDE, LEFT_PARENTHESIS,
                    RIGHT_PARENTHESIS, PRECENT, BACKSPACE, PERIOD, EQUALS]
+
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+    FOUR = 4
+    FIVE = 5
+    SIX = 6
+    SEVEN = 7
+    EIGHT = 8
+    NINE = 9
+    ENTER = "Enter"
+
+    char = ','
+
+    key_map = [SEVEN, EIGHT, NINE,
+               FOUR,  FIVE,  SIX,
+               ONE,   TWO,   THREE,
+               char,  ZERO,  ENTER]
 
     def __init__(self, macropad):
         self.macropad = macropad
         self.macropad_sleep = False
 
-        self.KEYCODE = [self.macropad.Keycode.KEYPAD_SEVEN,
+        self.ENCODER_KEYCODE = [self.macropad.Keycode.COMMA,
+                                self.macropad.Keycode.KEYPAD_PLUS,
+                                self.macropad.Keycode.KEYPAD_MINUS,
+                                self.macropad.Keycode.KEYPAD_ASTERISK,
+                                self.macropad.Keycode.KEYPAD_FORWARD_SLASH,
+                                self.macropad.Keycode.EIGHT,
+                                self.macropad.Keycode.NINE,
+                                self.macropad.Keycode.FIVE,
+                                self.macropad.Keycode.BACKSPACE,
+                                self.macropad.Keycode.PERIOD,
+                                self.macropad.Keycode.KEYPAD_EQUALS]
+
+        self.keycode = [self.macropad.Keycode.KEYPAD_SEVEN,
                         self.macropad.Keycode.KEYPAD_EIGHT,
                         self.macropad.Keycode.KEYPAD_NINE,
                         self.macropad.Keycode.KEYPAD_FOUR,
@@ -65,17 +79,6 @@ class NumPad:
                         self.macropad.Keycode.KEYPAD_ZERO,
                         self.macropad.Keycode.KEYPAD_ENTER]
 
-        self.ENCODER_KEYCODE = [self.macropad.Keycode.KEYPAD_PLUS,
-                                self.macropad.Keycode.KEYPAD_MINUS,
-                                self.macropad.Keycode.KEYPAD_ASTERISK,
-                                self.macropad.Keycode.KEYPAD_FORWARD_SLASH,
-                                self.macropad.Keycode.EIGHT,
-                                self.macropad.Keycode.NINE,
-                                self.macropad.Keycode.FIVE,
-                                self.macropad.Keycode.BACKSPACE,
-                                self.macropad.Keycode.PERIOD,
-                                self.macropad.Keycode.KEYPAD_EQUALS]
-
         self.last_knob_pos = self.macropad.encoder
         self.knob_delta = 0
         self.encoder_pos = 0
@@ -85,7 +88,11 @@ class NumPad:
     def send_key_press(self, key_event, text_lines):
         key = key_event.key_number
         self.macropad.pixels[key] = NumPad.PRESSED_COLOR
-        self.macropad.keyboard.send(self.KEYCODE[key])
+        if self.encoder_pos in [5, 6, 7]:
+            self.macropad.keyboard.press(self.macropad.Keycode.SHIFT,
+                                         self.keycode[key]), self.macropad.keyboard.release_all()
+        else:
+            self.macropad.keyboard.send(self.keycode[key])
         self.__update_screen_characters_entered(key, text_lines)
         return time.monotonic()
 
@@ -98,19 +105,16 @@ class NumPad:
 
     def read_knob_value(self, text_lines):
         self.knob_delta = self.encoder_pos - self.last_knob_pos
-        self.encoder_pos = (self.macropad.encoder + self.knob_delta) % 10
-        text_lines[0].text = f"Encoder character: {NumPad.ENCODER_MAP[self.encoder_pos]}"
+        self.encoder_pos = (self.macropad.encoder + self.knob_delta) % 11
+        self.keycode[9] = self.ENCODER_KEYCODE[self.encoder_pos]
+        self.key_map[9] = self.ENCODER_MAP[self.encoder_pos]
+        text_lines[0].text = f"CYAN character: {NumPad.ENCODER_MAP[self.encoder_pos]}"
         self.last_knob_pos = self.macropad.encoder
         return time.monotonic()
 
 
     def handle_encoder_click(self, text_lines):
-        self.__update_screen_characters_entered("Encoder", text_lines)
-        if self.encoder_pos in [4, 5, 6]:
-            self.macropad.keyboard.press(self.macropad.Keycode.SHIFT,
-                self.ENCODER_KEYCODE[self.encoder_pos]), self.macropad.keyboard.release_all()
-        else:
-            self.macropad.keyboard.send(self.ENCODER_KEYCODE[self.encoder_pos])
+
         return time.monotonic()
 
 
@@ -128,19 +132,16 @@ class NumPad:
 
 
     def __update_screen_characters_entered(self, key, text_lines):
-        if key == "Encoder":
-            if NumPad.ENCODER_MAP[self.encoder_pos] == '<-':
-                self.characters_entered = self.characters_entered[:-1]
-            elif NumPad.ENCODER_MAP[self.encoder_pos] == '=':
-                self.clear_screen = True
-                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
-            else:
-                self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
-        elif NumPad.KEY_MAP[key] == "Enter":
+        if NumPad.key_map[key] == '<-':
+            self.characters_entered = self.characters_entered[:-1]
+        elif NumPad.key_map[key] == '=':
+            self.clear_screen = True
+            self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
+        elif NumPad.key_map[key] == "Enter":
             self.clear_screen = True
         else:
             self.clear_screen = False
-            self.characters_entered = f"{self.characters_entered}{NumPad.KEY_MAP[key]}"
+            self.characters_entered = f"{self.characters_entered}{NumPad.key_map[key]}"
         text_lines[1].text = f"{self.characters_entered}"
 
 

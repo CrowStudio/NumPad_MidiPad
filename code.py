@@ -53,7 +53,7 @@ def configure_keypad():
 def set_button_mode_text(keypad):
     if button_mode == "NumPad":
         text_lines = macropad.display_text("NumPad")
-        text_lines[0].text = f"Encoder character: {keypad.ENCODER_MAP[keypad.encoder_pos]}"
+        text_lines[0].text = f"CYAN character: {keypad.ENCODER_MAP[keypad.encoder_pos]}"
     elif button_mode == "MidiCtrl":
         text_lines = macropad.display_text("BlackBox MIDI")
         text_lines[0].text = f"{keypad.MODE_TEXT[keypad.encoder_mode]} {keypad.row[keypad.row_pos]}"
