@@ -6,6 +6,7 @@ class NumPad:
     WHITE = (255, 255, 255)
     CYAN = (0, 255, 255)
     MAGENTA = (255, 0, 255)
+    RED = (255, 0, 0)
 
     KEY_COLOR = [YELLOW, YELLOW, YELLOW,
                  YELLOW, YELLOW, YELLOW,
@@ -15,6 +16,8 @@ class NumPad:
     PRESSED_COLOR = WHITE
 
     RESET_ENTERED_CHAR = 3
+
+    MODE_TEXT = ["CYAN character:", "Volume:"]
 
     COMMA = ','
     PLUS = '+'
@@ -81,14 +84,20 @@ class NumPad:
 
         self.last_knob_pos = self.macropad.encoder
         self.knob_delta = 0
-        self.encoder_pos = 0
+        self.char_pos = 0
+        self.volume_direction = 0
+
+        self.level = 0
+
+        self.encoder_mode = 0
+
         self.clear_screen = False
         self.characters_entered = ""
 
     def send_key_press(self, key_event, text_lines):
         key = key_event.key_number
         self.macropad.pixels[key] = NumPad.PRESSED_COLOR
-        if self.encoder_pos in [5, 6, 7]:
+        if self.char_pos in [5, 6, 7]:
             self.macropad.keyboard.press(self.macropad.Keycode.SHIFT,
                                          self.keycode[key]), self.macropad.keyboard.release_all()
         else:
@@ -104,17 +113,23 @@ class NumPad:
 
 
     def read_knob_value(self, text_lines):
-        self.knob_delta = self.encoder_pos - self.last_knob_pos
-        self.encoder_pos = (self.macropad.encoder + self.knob_delta) % 11
-        self.keycode[9] = self.ENCODER_KEYCODE[self.encoder_pos]
-        self.key_map[9] = self.ENCODER_MAP[self.encoder_pos]
-        text_lines[0].text = f"CYAN character: {NumPad.ENCODER_MAP[self.encoder_pos]}"
+        if self.encoder_mode == 0:
+            self.knob_delta = self.char_pos - self.last_knob_pos
+            self.char_pos = (self.macropad.encoder + self.knob_delta) % 11
+            self.keycode[9] = self.ENCODER_KEYCODE[self.char_pos]
+            NumPad.key_map[9] = NumPad.ENCODER_MAP[self.char_pos]
+            self.macropad.pixels[9] = NumPad.RED if NumPad.key_map[9] == '<-' else NumPad.CYAN
+            text_lines[0].text = f"CYAN character: {NumPad.ENCODER_MAP[self.char_pos]}"
         self.last_knob_pos = self.macropad.encoder
         return time.monotonic()
 
 
     def handle_encoder_click(self, text_lines):
-
+        self.encoder_mode = (self.encoder_mode + 1) % 2 
+        if self.encoder_mode == 0:
+            text_lines[0].text = f"{NumPad.MODE_TEXT[self.encoder_mode]} {NumPad.ENCODER_MAP[self.char_pos]}"
+        else:    
+            text_lines[0].text = f"{NumPad.MODE_TEXT[self.encoder_mode]} {self.level}"
         return time.monotonic()
 
 
@@ -136,7 +151,7 @@ class NumPad:
             self.characters_entered = self.characters_entered[:-1]
         elif NumPad.key_map[key] == '=':
             self.clear_screen = True
-            self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.encoder_pos]}"
+            self.characters_entered = f"{self.characters_entered}{NumPad.ENCODER_MAP[self.char_pos]}"
         elif NumPad.key_map[key] == "Enter":
             self.clear_screen = True
         else:

@@ -63,7 +63,7 @@ class MidiCtrl:
 
         self.row = [3, 4]
 
-        self.last_knob_pos = self.macropad.encoder  # store knob position state
+        self.last_knob_pos = self.macropad.encoder
 
         self.knob_pos = 0
         self.knob_delta = 0
